@@ -1,13 +1,13 @@
 import type { WasmSource } from "@z-rack/core";
 import { describe, test as vitest } from "vitest";
 
+import wasmUrl from "../build/vibrato_wasm.wasm?url";
 import {
   Vibrato,
   type VibratoDictionaryDataZstd,
   VibratoNotOpenError,
   VibratoChecksumError,
 } from "../lib/index.js";
-import wasmUrl from "../wasm/vibrato_wasm.wasm?url";
 import dictUrl from "./vibrato.dic.zst?url";
 
 let wasmCache: Uint8Array;

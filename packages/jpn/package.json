@@ -26,6 +26,7 @@
     "./vibrato.wasm": "./dist/build/vibrato_wasm.wasm"
   },
   "scripts": {
+    "prebuild": "cargo install wasm-pack wasm-opt",
     "build": "run-s build:*",
     "build:wasm": "run-s build:wasm:*",
     "build:wasm:pack": "wasm-pack build --target bundler --out-dir build",
