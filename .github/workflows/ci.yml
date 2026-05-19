@@ -87,7 +87,7 @@ jobs:
       - name: "依存関係をインストール（パッケージ）"
         run: |
           if grep -q "playwright" package.json; then
-            pnpm dlx playwright install --with-deps
+            npx playwright install --with-deps
           fi
         working-directory: ${{ matrix.package-directory }}
 
