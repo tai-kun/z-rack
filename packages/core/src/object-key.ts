@@ -89,12 +89,12 @@ export default class ObjectKey {
       objectKey = v.parseInput(StringObjectKeySchema, objectKey);
     }
 
-    if (typeof objectKey === "string") {
-      this.#buffer = utf8.encode(objectKey);
-      this.#string = objectKey;
-    } else {
+    if (typeof objectKey !== "string") {
       this.#buffer = arguments[0];
       this.#string = arguments[1];
+    } else {
+      this.#buffer = utf8.encode(objectKey);
+      this.#string = objectKey;
     }
   }
 
