@@ -48,5 +48,5 @@ run = [
   "npx npm-check-updates --target minor -u --cooldown 7",
   "pnpm install",
   "npx playwright install --with-deps",
-  "cargo install wasm-pack",
+  "cargo install wasm-pack wasm-opt",
 ]
