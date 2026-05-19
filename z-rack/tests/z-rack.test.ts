@@ -41,7 +41,9 @@ const test = vitest.extend<{
     } else {
       Vibrato.setWasmSource(vibratoWasmUri);
 
-      const pgliteWorker = new Worker(pgliteWorkerUri);
+      const pgliteWorker = new Worker(new URL(pgliteWorkerUri, import.meta.url), {
+        type: "module",
+      });
       await using zr = new ZRack({
         textSearch: new Vibrato(
           {

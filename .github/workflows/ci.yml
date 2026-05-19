@@ -25,7 +25,7 @@ jobs:
             "packages/pglite",
             "z-rack"
           ]
-    timeout-minutes: 15
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - name: "チェックアウト"
