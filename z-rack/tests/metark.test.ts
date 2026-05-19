@@ -1,8 +1,8 @@
+import { Memory } from "@unikvs/memory";
 import { Vibrato } from "@z-rack/jpn";
 import vibratoWasmUri from "@z-rack/jpn/vibrato.wasm?url";
 import { Pglite } from "@z-rack/pglite";
 import pgliteWorkerUri from "@z-rack/pglite/worker?url";
-import { Memory } from "@unikvs/memory";
 import { UniKvs } from "unikvs";
 import { test as vitest } from "vitest";
 
@@ -14,10 +14,10 @@ let vibratoDictCache: Uint8Array<ArrayBuffer>;
 
 // oxlint-disable-next-line jest/expect-expect jest/no-disabled-tests
 const test = vitest.extend<{
-  mk: ZRack;
+  zr: ZRack;
 }>({
   // oxlint-disable-next-line no-empty-pattern
-  async mk({}, use) {
+  async zr({}, use) {
     if (typeof document === "undefined") {
       const { readFile } = await import("node:fs/promises");
       const { Worker } = await import("node:worker_threads");
@@ -31,18 +31,18 @@ const test = vitest.extend<{
       Vibrato.setWasmSource(vibratoWasm);
 
       const pgliteWorker = new Worker(uri2path(pgliteWorkerUri));
-      await using z-rack = new ZRack({
+      await using zr = new ZRack({
         textSearch: new Vibrato(vibratoDict, { omitPos: ["助詞"] }),
         storageSystem: UniKvs.config().appendStorage(new Memory()).create(),
         databaseClient: new Pglite(pgliteWorker),
       });
 
-      await use(z-rack);
+      await use(zr);
     } else {
       Vibrato.setWasmSource(vibratoWasmUri);
 
       const pgliteWorker = new Worker(pgliteWorkerUri);
-      await using z-rack = new ZRack({
+      await using zr = new ZRack({
         textSearch: new Vibrato(
           {
             url: vibratoDictUri,
@@ -54,24 +54,24 @@ const test = vitest.extend<{
         databaseClient: new Pglite(pgliteWorker),
       });
 
-      await use(z-rack);
+      await use(zr);
     }
   },
 });
 
-test("a", { timeout: 15e3 }, async ({ expect, mk }) => {
-  await mk.open();
+test("a", { timeout: 15e3 }, async ({ expect, zr }) => {
+  await zr.open();
 
-  await mk.putObject("foo/bar/baz.txt", Uint8Array.from([0, 1, 2]), {
+  await zr.putObject("foo/bar/baz.txt", Uint8Array.from([0, 1, 2]), {
     description: "すもももももももものうち",
   });
-  await mk.putObject("foo/bar/xxx.txt", Uint8Array.from([0, 1, 2]));
-  await mk.putObject("foo/bar.txt", Uint8Array.from([0, 1, 2]), {
+  await zr.putObject("foo/bar/xxx.txt", Uint8Array.from([0, 1, 2]));
+  await zr.putObject("foo/bar.txt", Uint8Array.from([0, 1, 2]), {
     description: "吾輩は猫である",
   });
-  await mk.ready;
+  await zr.ready;
 
-  const foo = await mk.getObject("foo/bar/baz.txt", {
+  const foo = await zr.getObject("foo/bar/baz.txt", {
     select: {
       description: true,
       userMetadata: true,
@@ -83,7 +83,7 @@ test("a", { timeout: 15e3 }, async ({ expect, mk }) => {
   console.log(foo.userMetadata);
   console.log(await foo.arrayBuffer());
 
-  await mk.updateObjectMetadata("foo/bar.txt", {
+  await zr.updateObjectMetadata("foo/bar.txt", {
     description: "ももを買ってくる",
   });
 
@@ -91,7 +91,7 @@ test("a", { timeout: 15e3 }, async ({ expect, mk }) => {
     JSON.parse(
       JSON.stringify(
         await Array.fromAsync(
-          await mk.listObjects({
+          await zr.listObjects({
             prefix: "foo/",
             select: {
               key: true,
@@ -107,7 +107,7 @@ test("a", { timeout: 15e3 }, async ({ expect, mk }) => {
     JSON.parse(
       JSON.stringify(
         await Array.fromAsync(
-          await mk.searchObjects({
+          await zr.searchObjects({
             query: "もも",
             prefix: "foo/",
             select: {
@@ -120,7 +120,7 @@ test("a", { timeout: 15e3 }, async ({ expect, mk }) => {
     ),
   );
 
-  await mk.close();
+  await zr.close();
 
   expect(true).toBe(true);
 });

@@ -1,5 +1,5 @@
-import { bytesToHex, EntityTag } from "@z-rack/core";
 import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, EntityTag } from "@z-rack/core";
 
 const entityTag = {
   digest(bytes: Uint8Array): EntityTag {

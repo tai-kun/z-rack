@@ -1,7 +1,11 @@
-import { describe, test } from "vitest";
+import { afterEach, describe, test } from "vitest";
 
 import objectKeyInternalUse from "../src/_object-key-internal-use.js";
 import ObjectKey from "../src/object-key.js";
+
+afterEach(() => {
+  objectKeyInternalUse.enable = false;
+});
 
 describe("基本解析機能", () => {
   test("シンプルなファイル名が与えられたとき、ベース名と拡張子が正しく抽出される", ({ expect }) => {
@@ -165,15 +169,7 @@ describe("内部仕様と最適化", () => {
   }) => {
     // Arrange
     const key = ""; // 無効なオブジェクトキー
-
-    using _ = (() => {
-      objectKeyInternalUse.enable = true;
-      return {
-        [Symbol.dispose]() {
-          objectKeyInternalUse.enable = false;
-        },
-      };
-    })();
+    objectKeyInternalUse.enable = true;
 
     // Act
     const target = new ObjectKey(key);

@@ -1,3 +1,5 @@
+import { uuid58Encode } from "@nakanoaas/uuid58";
+import { sha256 } from "@noble/hashes/sha2.js";
 import {
   type Uint,
   type EntityId,
@@ -30,8 +32,6 @@ import {
   TimestampSchema,
   UnexpectedError,
 } from "@z-rack/core";
-import { uuid58Encode } from "@nakanoaas/uuid58";
-import { sha256 } from "@noble/hashes/sha2.js";
 import bs58 from "bs58";
 import { sql } from "pgsql-template-tag";
 
