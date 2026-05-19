@@ -1,0 +1,21 @@
+[package]
+name = "vibrato-wasm"
+version = "0.0.0"
+edition = "2024"
+
+[lib]
+name = "vibrato_wasm"
+crate-type = ["cdylib"]
+
+[dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+ruzstd = "0.8.2"
+serde-wasm-bindgen = "0.6.5"
+vibrato = "0.5.2"
+wasm-bindgen = "0.2.114"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+opt-level = "z"
+lto = true

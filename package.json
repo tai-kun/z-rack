@@ -1,0 +1,26 @@
+{
+  "name": "z-rack-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "homepage": "https://github.com/tai-kun/z-rack",
+  "license": "MIT",
+  "author": "tai-kun",
+  "repository": {
+    "url": "https://github.com/tai-kun/z-rack"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/eng",
+    "packages/jpn",
+    "packages/pglite",
+    "z-rack"
+  ],
+  "type": "module",
+  "devDependencies": {
+    "npm-check-updates": "^20.0.2",
+    "oxfmt": "0.45.0",
+    "oxlint": "1.60.0",
+    "oxlint-tsgolint": "0.21.1",
+    "typescript": "^6.0.3"
+  }
+}

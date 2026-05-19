@@ -1,0 +1,58 @@
+{
+  "folders": [
+    {
+      "name": ".",
+      "path": "./",
+    },
+    {
+      "name": "z-rack",
+      "path": "./z-rack",
+    },
+    {
+      "name": "@z-rack/core",
+      "path": "./packages/core",
+    },
+    {
+      "name": "@z-rack/eng",
+      "path": "./packages/eng",
+    },
+    {
+      "name": "@z-rack/jpn",
+      "path": "./packages/jpn",
+    },
+    {
+      "name": "@z-rack/pglite",
+      "path": "./packages/pglite",
+    },
+  ],
+  "settings": {
+    // 一般
+
+    "editor.rulers": [100],
+    "editor.wordWrapColumn": 100,
+    "editor.wordWrap": "wordWrapColumn",
+
+    // TypeScript
+
+    "js/ts.tsdk.path": "./node_modules/typescript/lib",
+
+    // Oxc
+
+    "oxc.path.node": "/home/taikun/.local/share/mise/installs/node/24/bin/node",
+
+    "oxc.path.oxfmt": "./node_modules/.bin/oxfmt",
+    "oxc.path.oxlint": "./node_modules/.bin/oxlint",
+    "oxc.path.tsgolint": "./node_modules/.bin/tsgolint",
+
+    "oxc.fmt.configPath": "./.config/.oxfmtrc.json",
+
+    "[javascript][typescript][typescriptreact][css][html][json][jsonc][yaml][markdown][toml][sql]": {
+      "editor.defaultFormatter": "oxc.oxc-vscode",
+      "editor.formatOnSave": false,
+      "editor.codeActionsOnSave": {
+        "source.fixAll.oxc": "always",
+        "source.format.oxc": "always",
+      },
+    },
+  },
+}

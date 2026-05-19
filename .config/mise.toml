@@ -1,0 +1,24 @@
+[settings]
+minimum_release_age = "7d"
+
+[tools]
+node = "24"
+pnpm = "10"
+rust = "1"
+
+[tasks.test]
+run = [{ task = "test:format" }]
+
+[tasks."test:format"]
+run = "npx oxfmt --config ./.config/.oxfmtrc.json --check"
+
+[tasks.fmt]
+run = "npx oxfmt --config ./.config/.oxfmtrc.json"
+
+[tasks.update]
+run = [
+  "npx npm-check-updates --target minor -u --cooldown 7 --reject oxfmt --reject oxlint --reject oxlint-tsgolint",
+  "pnpm install",
+  "for d in $(jq -r '.workspaces[]' package.json | xargs ls -d); do (cd \"$d\" && mise run update); done",
+  "pnpm audit",
+]

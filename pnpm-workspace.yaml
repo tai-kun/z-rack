@@ -1,0 +1,22 @@
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - asyncmux
+  - fast-utf8
+  - maypromise
+  - ninja-promise
+  - pgsql-template-tag
+  - unikvs
+  - "@unikvs/*"
+  - "@tai-kun/valibot-extra-lab"
+onlyBuiltDependencies: []
+strictDepBuilds: false
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+packages:
+  [
+    "packages/core",
+    "packages/eng",
+    "packages/jpn",
+    "packages/pglite",
+    "z-rack"
+  ]
