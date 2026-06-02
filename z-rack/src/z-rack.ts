@@ -11,7 +11,6 @@ import {
   ObjectKey,
   UintSchema,
   IdleTaskQueue,
-  combineSignals,
   LanguageSchema,
   MimeTypeSchema,
   OpenModeSchema,
@@ -25,6 +24,7 @@ import {
   OrderDirectionSchema,
   ObjectKeyPrefixSchema,
 } from "@z-rack/core";
+import { combineSignals } from "abort-signal-utils";
 import { Asyncmux, asyncmux } from "asyncmux";
 import type { MaybePromise } from "maypromise";
 import { KeyNotFoundError, UniKvs, ValueStream, type Value } from "unikvs";
@@ -738,7 +738,7 @@ export default class ZRack implements AsyncDisposable {
           }
 
           try {
-            await db.close(signal);
+            await db.close(signal, err);
           } catch (ex) {
             logger.error`ZRack.open: Failed to close database client: ${ex}`;
           }
@@ -826,7 +826,7 @@ export default class ZRack implements AsyncDisposable {
 
       if (close.db) {
         try {
-          await db.close(signal);
+          await db.close(signal, new ZRackIsNotOpenError());
         } catch (ex) {
           logger.error`ZRack.close: Failed to close database client: ${ex}`;
         }

@@ -1,11 +1,11 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { type ITextSearch, type WasmSource, bytesToHex, HttpResponseError } from "@z-rack/core";
+import { type WasmSource, type ITextSearch, bytesToHex, HttpResponseError } from "@z-rack/core";
 
 import * as vibrato from "../build/vibrato_wasm.js";
 import loadVibratoWasmOnce from "./_load-vibrato-wasm-once.js";
 import logger from "./_logger.js";
 import once from "./_once.js";
-import { VibratoChecksumError, VibratoNotOpenError } from "./errors.js";
+import { VibratoNotOpenError, VibratoChecksumError } from "./errors.js";
 
 /**
  * Vibrato の辞書データを表す型定義です。
@@ -56,7 +56,7 @@ export default class Vibrato implements ITextSearch {
   }
 
   /**
-   * 内部状態を管理するプライベートプロパティーです。
+   * 内部状態を管理する非公開プロパティーです。
    *
    * 初期化状態に応じて、WASM インスタンス、URL 情報、または未処理の辞書データを保持します。
    */

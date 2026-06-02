@@ -1,4 +1,4 @@
-import { ErrorBase, setErrorMessage, type ErrorOptions } from "@z-rack/core";
+import { type ErrorOptions, ErrorBase, setErrorMessage } from "@z-rack/core";
 
 /**
  * 辞書データのチェックサムエラーに関するメタ情報の型定義です。

@@ -7,14 +7,17 @@ import {
 } from "@z-rack/core";
 import { sql } from "pgsql-template-tag";
 
-import slot from "./_slot.js";
+const privateMetadataTable = sql.query("privateMetadataTable");
 
-const privateMetadataTable = slot("privateMetadataTable").sql();
+const objectId = sql.text("objectId").notNull().narrow<ObjectId>();
+const objectKey = sql.text("objectKey").notNull();
+const recordTimestamp = sql.timestamp("recordTimestamp").notNull().narrow<RecordTimestamp>();
 
-const objectId = slot("objectId").text<ObjectId>();
-const objectKey = slot("objectKey").text();
-const recordTimestamp = slot("recordTimestamp").timestamp<RecordTimestamp>();
-
+/**
+ * メタデータのレコードステータスを `'DELETE'` に更新するための SQL クエリーです。
+ *
+ * 論理削除されたメタデータの `object_id` と `entity_id` を返します。
+ */
 export const UpdateMetadataDeletedSql = sql`
 UPDATE ${privateMetadataTable}
 SET
@@ -38,6 +41,9 @@ RETURNING
   entity_id AS "entityId"
 `;
 
+/**
+ * {@link UpdateMetadataDeletedSql} の実行結果を検証し、単一のオブジェクトに変換するための Valibot スキーマです。
+ */
 export const UpdateMetadataDeletedResultSchema = v.pipe(
   v.array(
     v.object({
@@ -46,9 +52,15 @@ export const UpdateMetadataDeletedResultSchema = v.pipe(
     }),
   ),
   v.maxLength(1),
+  // カラム `_key` には一意制約がかけられているので、配列を単一のオブジェクトにできます。
   v.transform((rows) => rows[0]),
 );
 
+/**
+ * 指定されたオブジェクト ID を持つメタデータレコードを物理削除するための SQL クエリーです。
+ *
+ * オブジェクト ID に一致するレコードを非公開メタデータテーブルから完全に削除します。
+ */
 export const DeleteMetadataSql = sql`
 DELETE FROM ${privateMetadataTable}
 WHERE

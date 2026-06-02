@@ -71,8 +71,7 @@ export type Sha256Hex = v.InferOutput<typeof Sha256HexSchema>;
 export const TimestampSchema = v.pipe(
   v.union([v.string(), v.number(), v.instance(Date)]),
   v.transform((x) => new Date(x).getTime()),
-  v.minValue(-8_640_000_000_000_000),
-  v.maxValue(+8_640_000_000_000_000),
+  v.finite(),
   v.brand("Timestamp"),
 );
 

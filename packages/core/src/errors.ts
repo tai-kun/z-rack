@@ -1,9 +1,8 @@
 import { type ErrorMeta, I18nErrorBase, setErrorMessage, type ErrorOptions } from "i18n-error-base";
+import { inspect } from "inspect-lite";
 import getTypeName from "type-name";
 import type { BaseIssue } from "valibot";
 import { safeParse, union, null_, string } from "valibot";
-
-import inspect from "./inspect.js";
 
 export type { ErrorMeta, ErrorOptions };
 export { setErrorMessage };

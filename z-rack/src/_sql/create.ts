@@ -12,29 +12,35 @@ import type {
   RecordTimestamp,
   TextSearchFormat,
 } from "@z-rack/core";
-import { type Sql, sql } from "pgsql-template-tag";
+import { sql } from "pgsql-template-tag";
 
-import slot from "./_slot.js";
+const privateMetadataTable = sql.query("privateMetadataTable");
 
-const privateMetadataTable = slot("privateMetadataTable").sql();
+const entityId = sql.text("entityId").notNull().narrow<EntityId>();
+const language = sql.text("language").narrow<Language | null>();
+const mimeType = sql.text("mimeType").notNull().narrow<MimeType>();
+const objectId = sql.text("objectId").notNull().narrow<ObjectId>();
+const createdAt = sql.timestamp("createdAt").notNull().narrow<CreatedAt>();
+const entityTag = sql.text("entityTag").notNull().narrow<EntityTag>();
+const objectKey = sql.text("objectKey").notNull();
+const objectSize = sql.bigint("objectSize").notNull().narrow<ObjectSize>();
+const objectTags = sql.query("objectTags").notNull().narrow<sql.Sql<readonly string[]>>();
+const searchText = sql.text("searchText").narrow<SearchText | null>();
+const description = sql.text("description").narrow<Description | null>();
+const keySegments = sql
+  .query("keySegments")
+  .notNull()
+  .narrow<sql.Sql<readonly [...string[], string]>>();
+const userMetadata = sql.jsonb("userMetadata").notNull();
+const lastModifiedAt = sql.timestamp("lastModifiedAt").notNull().narrow<LastModifiedAt>();
+const recordTimestamp = sql.timestamp("recordTimestamp").notNull().narrow<RecordTimestamp>();
+const textSearchFormat = sql.text("textSearchFormat").notNull().narrow<TextSearchFormat>();
 
-const entityId = slot("entityId").text<EntityId>();
-const language = slot("language").text<Language>().nullable();
-const mimeType = slot("mimeType").text<MimeType>();
-const objectId = slot("objectId").text<ObjectId>();
-const createdAt = slot("createdAt").timestamp<CreatedAt>();
-const entityTag = slot("entityTag").text<EntityTag>();
-const objectKey = slot("objectKey").text();
-const objectSize = slot("objectSize").bigint<ObjectSize>();
-const objectTags = slot("objectTags").sql<Sql<readonly string[]>>();
-const searchText = slot("searchText").text<SearchText>().nullable();
-const description = slot("description").text<Description>().nullable();
-const keySegments = slot("keySegments").sql<Sql<readonly [...string[], string]>>();
-const userMetadata = slot("userMetadata").jsonb();
-const lastModifiedAt = slot("lastModifiedAt").timestamp<LastModifiedAt>();
-const recordTimestamp = slot("recordTimestamp").timestamp<RecordTimestamp>();
-const textSearchFormat = slot("textSearchFormat").text<TextSearchFormat>();
-
+/**
+ * メタデータを新規作成する SQL クエリーです。
+ *
+ * 指定されたすべてのパラメーターを使用して、新しいメタデータレコードを挿入します。
+ */
 export const CreateMetadataSql = sql`
 INSERT INTO ${privateMetadataTable} (
   object_id,
@@ -74,10 +80,15 @@ INSERT INTO ${privateMetadataTable} (
   ${textSearchFormat},
   ARRAY[${objectTags}]::TEXT[],
   ${userMetadata}
-)`;
+)
+`;
 
-export const CreateMetadataOverwriteSql = sql`
-ON CONFLICT (_key)
+/**
+ * メタデータ作成時に競合が発生した場合のアップサート用 SQL フラグメントです。
+ *
+ * カラム `_key` で一意制約違反が発生した場合、既存のレコードを指定された値で上書きします。
+ */
+export const CreateMetadataOverwriteSql = sql`ON CONFLICT (_key)
 DO UPDATE SET
   record_type        = EXCLUDED.record_type,
   record_timestamp   = EXCLUDED.record_timestamp,
@@ -94,21 +105,3 @@ DO UPDATE SET
   object_tags        = EXCLUDED.object_tags,
   user_metadata      = EXCLUDED.user_metadata
 `;
-
-// export const CreateMetadataReturningSql = sql`
-// RETURNING
-//   (
-//     xmax = 0 OR
-//     search_text != (SELECT search_text FROM ${privateMetadataTable} WHERE _key = ${objectKey})
-//   ) AS "searchTextChanged";
-// `;
-
-// export const CreateMetadataResultSchema = v.pipe(
-//   v.array(
-//     v.object({
-//       searchTextChanged: v.nullable(v.boolean(), true),
-//     }),
-//   ),
-//   v.length(1),
-//   v.transform((rows) => rows[0]!),
-// );

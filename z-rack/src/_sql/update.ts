@@ -7,22 +7,23 @@ import {
   type RecordTimestamp,
   v,
 } from "@z-rack/core";
-import { sql, Sql } from "pgsql-template-tag";
+import { sql } from "pgsql-template-tag";
 
-import slot from "./_slot.js";
+const privateMetadataTable = sql.query("privateMetadataTable");
 
-const privateMetadataTable = slot("privateMetadataTable").sql();
+const language = sql.text("language").narrow<Language | null>();
+const mimeType = sql.text("mimeType").notNull().narrow<MimeType>();
+const objectKey = sql.text("objectKey").notNull();
+const objectTags = sql.query("objectTags").notNull().narrow<sql.Sql<readonly string[]>>();
+const searchText = sql.text("searchText").narrow<SearchText | null>();
+const description = sql.text("description").narrow<Description | null>();
+const userMetadata = sql.jsonb("userMetadata").notNull();
+const lastModifiedAt = sql.timestamp("lastModifiedAt").notNull().narrow<LastModifiedAt>();
+const recordTimestamp = sql.timestamp("recordTimestamp").notNull().narrow<RecordTimestamp>();
 
-const language = slot("language").text<Language>().nullable();
-const mimeType = slot("mimeType").text<MimeType>();
-const objectKey = slot("objectKey").text();
-const objectTags = slot("objectTags").sql<Sql<readonly string[]>>();
-const searchText = slot("searchText").text<SearchText>().nullable();
-const description = slot("description").text<Description>().nullable();
-const userMetadata = slot("userMetadata").jsonb();
-const lastModifiedAt = slot("lastModifiedAt").timestamp<LastModifiedAt>();
-const recordTimestamp = slot("recordTimestamp").timestamp<RecordTimestamp>();
-
+/**
+ * メタデータ更新用 SQL の基底部分を定義するフラグメントです。
+ */
 export const UpdateMetadataBaseSql = sql`
 UPDATE ${privateMetadataTable} SET
   record_type      = 'UPDATE_METADATA'`;
@@ -58,6 +59,9 @@ RETURNING
   1
 `;
 
+/**
+ * メタデータ更新処理の結果を検証および変換するための Valibot スキーマです。
+ */
 export const UpdateMetadataResultSchema = v.pipe(
   v.array(v.object({})),
   v.maxLength(1),

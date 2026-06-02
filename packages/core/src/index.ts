@@ -1,9 +1,6 @@
 export type * from "./bytes-to-hex.js";
 export { default as bytesToHex } from "./bytes-to-hex.js";
 
-export type * from "./combine-signals.js";
-export { default as combineSignals } from "./combine-signals.js";
-
 export type * from "./create-abort-promise.js";
 export { default as createAbortPromise } from "./create-abort-promise.js";
 
@@ -39,9 +36,6 @@ export {
 
 export type * from "./idle-task-queue.js";
 export { default as IdleTaskQueue } from "./idle-task-queue.js";
-
-export type * from "./inspect.js";
-export { default as inspect } from "./inspect.js";
 
 export type * from "./is-error.js";
 export { default as isError } from "./is-error.js";
@@ -148,9 +142,6 @@ export {
 } from "./schemas.js";
 
 export type * from "./text-search.types.js";
-
-export type * from "./throw-if-aborted.js";
-export { default as throwIfAborted } from "./throw-if-aborted.js";
 
 export type * from "./unreachable.js";
 export { default as unreachable } from "./unreachable.js";

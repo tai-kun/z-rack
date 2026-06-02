@@ -1,12 +1,13 @@
 import type { EntityId } from "@z-rack/core";
 import { sql } from "pgsql-template-tag";
 
-import slot from "./_slot.js";
+const entityIdsTable = sql.query("entityIdsTable");
 
-const entityIdsTable = slot("entityIdsTable").sql();
+const entityId = sql.uuid("entityId").notNull().narrow<EntityId>();
 
-const entityId = slot("entityId").uuid<EntityId>();
-
+/**
+ * 新しいエンティティ ID をデータベースに登録するための SQL クエリーです。
+ */
 export const RegisterEntityIdSql = sql`
 INSERT INTO ${entityIdsTable} (entity_id) VALUES (${entityId})
 `;

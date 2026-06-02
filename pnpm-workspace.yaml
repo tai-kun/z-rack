@@ -1,7 +1,10 @@
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
+  - abort-signal-utils
   - asyncmux
+  - call-fn-once
   - fast-utf8
+  - inspect-lite
   - maypromise
   - ninja-promise
   - pgsql-template-tag

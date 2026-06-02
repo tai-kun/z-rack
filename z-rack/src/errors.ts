@@ -1,4 +1,4 @@
-import { ErrorBase, type Language, type ErrorOptions, setErrorMessage } from "@z-rack/core";
+import { type Language, type ErrorOptions, ErrorBase, setErrorMessage } from "@z-rack/core";
 
 export type UnsupportedLanguageErrorMeta = {
   readonly lang: Language;

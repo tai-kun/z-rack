@@ -1,17 +1,23 @@
 import { sql } from "pgsql-template-tag";
 
-import slot from "../_slot.js";
-
-const migrationsTable = slot("migrationsTable").sql();
+const migrationsTable = sql.query("migrationsTable");
 
 // oxfmt-ignore
 export default [
 
+// マイグレーション管理用のテーブルの作成
+//
+// このテーブルは、適用済みのマイグレーション履歴を追跡・記録するために使用されます。
+// テーブルが存在しない場合のみ新規作成を行います。
+//
+// カラム構成:
+// - name         実行されたマイグレーションの名前です。
+// - finished_at  マイグレーションが完了した日時です。
 sql`
 CREATE TABLE IF NOT EXISTS ${migrationsTable} (
-  name        TEXT      NOT NULL,
+  name        TEXT      PRIMARY KEY,
   finished_at TIMESTAMP
 )
 `,
 
-]
+];

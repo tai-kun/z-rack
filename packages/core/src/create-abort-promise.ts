@@ -1,6 +1,5 @@
+import { getAbortReason, throwIfAborted } from "abort-signal-utils";
 import { NinjaPromise } from "ninja-promise";
-
-import throwIfAborted from "./throw-if-aborted.js";
 
 /**
  * 指定された AbortSignal に基づいて、中断時に拒否される Promise を作成します。
@@ -15,7 +14,7 @@ export default function createAbortPromise(signal: AbortSignal): NinjaPromise<ne
   const { reject, promise } = NinjaPromise.withResolvers<never>();
 
   function handleAbort(this: AbortSignal): void {
-    reject(this.reason !== undefined ? this.reason : new DOMException("Aborted", "AbortError"));
+    reject(getAbortReason(this));
   }
 
   signal.addEventListener("abort", handleAbort, { once: true });

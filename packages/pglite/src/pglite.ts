@@ -1,5 +1,6 @@
-import { type IDatabaseClient, type Row, createAbortPromise, throwIfAborted } from "@z-rack/core";
-import { wrap, type Remote, type Endpoint, proxy } from "comlink";
+import { type Row, type IDatabaseClient, createAbortPromise } from "@z-rack/core";
+import { throwIfAborted } from "abort-signal-utils";
+import { type Remote, type Endpoint, wrap, proxy } from "comlink";
 import type { NodeEndpoint } from "comlink/dist/esm/node-adapter.js";
 // @ts-expect-error
 import nodeEndpoint from "comlink/dist/esm/node-adapter.mjs";

@@ -1,16 +1,18 @@
 import { sql } from "pgsql-template-tag";
 
-import slot from "../_slot.js";
-
-const configTable = slot("configTable").sql();
-const entityIdsTable = slot("entityIdsTable").sql();
-const objectIdsTable = slot("objectIdsTable").sql();
-const publicMetadataTable = slot("publicMetadataTable").sql();
-const privateMetadataTable = slot("privateMetadataTable").sql();
+const configTable = sql.query("configTable");
+const entityIdsTable = sql.query("entityIdsTable");
+const objectIdsTable = sql.query("objectIdsTable");
+const publicMetadataTable = sql.query("publicMetadataTable");
+const privateMetadataTable = sql.query("privateMetadataTable");
 
 // oxfmt-ignore
 export default [
 
+// 設定管理テーブルの作成
+//
+// アプリケーション全体で共有するキー・バリュー形式の設定を保持するためのテーブルです。
+// 主キーにはテキスト型のキーを使用し、値は JSON 形式で保存します。
 sql`
 CREATE TABLE ${configTable} (
   key   TEXT PRIMARY KEY,
@@ -18,6 +20,32 @@ CREATE TABLE ${configTable} (
 )
 `,
 
+// 非公開メタデータテーブルの作成
+//
+// オブジェクトの物理的な情報やシステム管理用の属性など、すべてのメタデータを統合的に保持する中心的なテーブルです。
+//
+// カラム構成:
+// - object_id           オブジェクトを一意に識別する UUID であり、このテーブルの主キーです。
+// - record_type         メタデータに加えた変更の種別です。
+//                       - "CREATE"           メタデータを作成しました。
+//                       - "UPDATE_METADATA"  メタデータを更新しました。
+//                       - "DELETE"           メタデータを削除しました。
+// - record_timestamp    メタデータに変更を加えた日時です。
+// - key                 オブジェクトキーです。
+// - _key                オブジェクトキーです。メタデータが削除された場合は NULL になります。これは、存在するメタデータをオブジェクトキーで高速に検索するときに使用されます。
+// - key_segments        オブジェクトキーをスラッシュで区切ったときの階層構造です。
+// - entity_id           オブジェクトデータの実体（エンティティー）の識別子です。
+// - entity_tag          エンティティーのハッシュ値です。
+// - object_size         オブジェクトのファイルサイズ (バイト数) です。
+// - mime_type           オブジェクトの MIME タイプです。
+// - created_at          オブジェクトの作成日時です。
+// - last_modified_at    メタデータの最終更新日時です。
+// - language            オブジェクトの説明文の言語です。
+// - description         オブジェクトの説明文です。
+// - search_text         検索用の文章です。
+// - text_search_format  テキスト検索の形式です。language と description から search_text へどのように変換されるかを示しています。
+// - object_tags         任意のタグ情報を格納するテキスト配列です。
+// - user_metadata       ユーザーが独自に定義可能な属性を格納する JSON 形式のメタデータです。
 sql`
 CREATE TABLE ${privateMetadataTable} (
   object_id UUID PRIMARY KEY,
@@ -47,44 +75,71 @@ CREATE TABLE ${privateMetadataTable} (
 )
 `,
 
+// 一意性インデックスの作成（_key）
+//
+// 存在するメタデータをオブジェクトキーで高速に検索するためのインデックスです。
 sql`
 CREATE UNIQUE INDEX "_z_rack-unq-private_metadata-_key" ON ${privateMetadataTable} (_key)
 `,
 
+// 一意性インデックスの作成（entity_id）
+//
+// エンティティー ID が重複しないように一意性を保証します。
 sql`
 CREATE UNIQUE INDEX "_z_rack-unq-private_metadata-entity_id" ON ${privateMetadataTable} (entity_id)
 `,
 
+// オブジェクト ID 管理テーブルの作成
+//
+// システム内で使用されるすべての有効なオブジェクト ID を一元管理するための親テーブルです。これは、新しい UUID を生成する際に、予め衝突しないことが保証された UUID であると確定するために使用されます。
 sql`
 CREATE TABLE ${objectIdsTable} (
   object_id UUID PRIMARY KEY
 )
 `,
 
+// 非公開メタデータテーブルへの外部キー制約の追加（object_id）
+//
+// メタデータが指すオブジェクト ID が、オブジェクト ID 管理テーブルに存在することを保証します。
+// - ON UPDATE RESTRICT  親のメタデータのオブジェクト ID が更新されるのを制限します。そもそもオブジェクト ID は変更されません。
+// - ON DELETE CASCADE   親のメタデータのオブジェクト ID が削除された場合、ID 管理テーブルからも削除します。
 sql`
-ALTER TABLE ${privateMetadataTable}
+ALTER TABLE ${objectIdsTable}
 ADD CONSTRAINT "_z_rack-fk-object_id"
 FOREIGN KEY (object_id)
-REFERENCES ${objectIdsTable} (object_id)
+REFERENCES ${privateMetadataTable} (object_id)
 ON UPDATE RESTRICT
 ON DELETE CASCADE;
 `,
 
+// エンティティー ID 管理テーブルの作成
+//
+// システム内で使用されるすべての有効なエンティティー ID を一元管理するための親テーブルです。これは、新しい ID を生成する際に、予め衝突しないことが保証された ID であると確定するために使用されます。
 sql`
 CREATE TABLE ${entityIdsTable} (
   entity_id TEXT PRIMARY KEY
 )
 `,
 
+// 非公開メタデータテーブルへの外部キー制約の追加（entity_id）
+//
+// メタデータが指すエンティティー ID が、エンティティー ID 管理テーブルに存在することを保証します。
+// - ON UPDATE CASCADE  親のメタデータのエンティティー ID が更新された場合、ID 管理テーブルも更新します。
+// - ON DELETE CASCADE  親のメタデータのエンティティー ID が削除された場合、ID 管理テーブルからも削除します。
 sql`
-ALTER TABLE ${privateMetadataTable}
+ALTER TABLE ${entityIdsTable}
 ADD CONSTRAINT "_z_rack-fk-entity_id"
 FOREIGN KEY (entity_id)
-REFERENCES ${entityIdsTable} (entity_id)
+REFERENCES ${privateMetadataTable} (entity_id)
 ON UPDATE CASCADE
 ON DELETE CASCADE;
 `,
 
+// 公開用メタデータビューの作成
+//
+// 内部管理用の非公開メタデータテーブルから、外部公開に必要な情報のみを抽出した仮想的なテーブルです。
+// - _key が NULL ではないレコードのみを対象とします。
+// - 各カラムの別名定義を行い、API や外部利用者が扱いやすい形式に変換します。
 sql`
 CREATE VIEW ${publicMetadataTable}
 AS
@@ -108,4 +163,4 @@ WHERE
   _key IS NOT NULL
 `,
 
-]
+];
