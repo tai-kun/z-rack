@@ -688,6 +688,8 @@ export default class ZRack implements AsyncDisposable {
 
     const lock = await asyncmux(this, signal);
     const ds = new AsyncDisposableStack();
+    const defer = ds.defer.bind(ds);
+    const dispose = ds.disposeAsync.bind(ds);
     try {
       if (this.#con !== null) {
         throw new ZRackIsOpenError();
@@ -710,7 +712,7 @@ export default class ZRack implements AsyncDisposable {
 
         await ts.open(signal);
 
-        ds.defer(async () => {
+        defer(async () => {
           if (err === nil) {
             return;
           }
@@ -732,7 +734,7 @@ export default class ZRack implements AsyncDisposable {
           throw (err = ex);
         }
 
-        ds.defer(async () => {
+        defer(async () => {
           if (err === nil) {
             return;
           }
@@ -755,7 +757,7 @@ export default class ZRack implements AsyncDisposable {
           throw (err = ex);
         }
 
-        ds.defer(async () => {
+        defer(async () => {
           if (err === nil) {
             return;
           }
@@ -779,7 +781,7 @@ export default class ZRack implements AsyncDisposable {
 
       return this;
     } finally {
-      await ds.disposeAsync();
+      await dispose();
       this.#acSet.delete(ac);
       lock.release();
     }
@@ -944,6 +946,8 @@ export default class ZRack implements AsyncDisposable {
       }
 
       const ds = new DisposableStack();
+      const defer = ds.defer.bind(ds);
+      const dispose = ds.dispose.bind(ds);
       const lock = await mux.lock({ key: String(key), signal });
       try {
         const language =
@@ -992,7 +996,7 @@ export default class ZRack implements AsyncDisposable {
 
         let err: unknown = nil;
 
-        ds.defer(() => {
+        defer(() => {
           if (err === nil) {
             return;
           }
@@ -1030,7 +1034,7 @@ export default class ZRack implements AsyncDisposable {
         }
       } finally {
         lock.release();
-        ds.dispose();
+        dispose();
       }
     } finally {
       lock.release();
