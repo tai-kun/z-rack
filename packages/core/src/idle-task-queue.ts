@@ -21,7 +21,7 @@ type QueuedItem = {
 /**
  * アイドル時に実行されるタスクの型定義です。
  *
- * @param signal タスクの中断を検知するための AbortSignal です。
+ * @param signal タスクの中断を検知するための中断シグナルです。
  * @returns タスクの完了を示す Promise です。IdleTaskQueue.CONTINUE を返すとタスクを再キューイングします。
  */
 export interface IdleTask {

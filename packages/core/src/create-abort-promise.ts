@@ -4,7 +4,7 @@ import { NinjaPromise } from "ninja-promise";
 /**
  * 指定された AbortSignal に基づいて、中断時に拒否される Promise を作成します。
  *
- * @param signal 操作の中断を監視するための AbortSignal インスタンスです。
+ * @param signal 操作の中断を監視するための中断シグナルインスタンスです。
  * @returns 初期状態が保留で、中断時にのみ拒否される NinjaPromise です。
  */
 export default function createAbortPromise(signal: AbortSignal): NinjaPromise<never> {

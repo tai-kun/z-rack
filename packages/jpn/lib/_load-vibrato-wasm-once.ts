@@ -16,7 +16,7 @@ declare global {
 /**
  * WASM モジュールを一度だけ読み込むための非同期関数です。
  *
- * @param signal 中断を制御するための AbortSignal です。
+ * @param signal 中断を制御するための中断シグナルです。
  * @returns 読み込みが完了すると解決される Promise です。
  */
 export default async function loadVibratoWasmOnce(signal: AbortSignal): Promise<void> {

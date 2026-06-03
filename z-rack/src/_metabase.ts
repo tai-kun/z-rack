@@ -255,7 +255,7 @@ export default class Metabase {
   /**
    * データベース接続を開き、初期化処理やマイグレーションを実行します。
    *
-   * @param signal 処理を中断するための AbortSignal です。
+   * @param signal 処理を中断するための中断シグナルです。
    * @returns 処理の完了を表す Promise です。
    */
   public async open(signal: AbortSignal): Promise<void> {
@@ -446,7 +446,7 @@ export default class Metabase {
   /**
    * バックグラウンドタスクを終了し、データベース接続を閉じます。
    *
-   * @param signal 処理を中断するための AbortSignal です。
+   * @param signal 処理を中断するための中断シグナルです。
    * @param reason 接続を閉じる理由です。
    * @returns 処理の完了を表す Promise です。
    */
@@ -487,7 +487,7 @@ export default class Metabase {
   /**
    * 新しいオブジェクト ID とタイムスタンプを生成して登録します。
    *
-   * @param signal 処理を中断するための AbortSignal です。
+   * @param signal 処理を中断するための中断シグナルです。
    * @returns 生成されたオブジェクト ID とタイムスタンプを含むオブジェクトです。
    */
   private async getObjectId(signal: AbortSignal): Promise<{

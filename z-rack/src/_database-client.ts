@@ -29,53 +29,59 @@ export interface QueryResult extends Promise<void> {
  * @returns `QueryResult` の仕様を満たすように拡張された Promise オブジェクトです。
  */
 function toQueryResult(promise: Promise<AsyncIterable<Row> | Iterable<Row>>): QueryResult {
-  // 元の Promise の `then` メソッドをバインドして保持します。
-  const superThen = promise.then.bind(promise);
+  // @ts-expect-error
+  return new Proxy(promise, {
+    get(target, p, receiver) {
+      switch (p) {
+        case "then":
+          /**
+           * Promise の `then` メソッドをオーバーライドします。
+           *
+           * クエリー の結果を最後まで消費して処理の完了を保証します。
+           *
+           * @param onfulfilled 成功時に呼び出されるコールバック関数です。
+           * @param onrejected 失敗時に呼び出されるコールバック関数です。
+           * @returns 新しい Promise オブジェクトです。
+           */
+          return function then(...args: any) {
+            return Promise.try(async () => {
+              for await (const _ of await promise) {
+                // 空のループで結果をすべて読み飛ばします。
+              }
+            }).then(...args);
+          };
 
-  return Object.assign<any, PromiseLike<void> & Pick<QueryResult, "iter" | "collect" | "then">>(
-    promise as any,
-    {
-      /**
-       * Promise の `then` メソッドをオーバーライドします。
-       *
-       * クエリー の結果を最後まで消費して処理の完了を保証します。
-       *
-       * @param onfulfilled 成功時に呼び出されるコールバック関数です。
-       * @param onrejected 失敗時に呼び出されるコールバック関数です。
-       * @returns 新しい Promise オブジェクトです。
-       */
-      // oxlint-disable-next-line unicorn/no-thenable
-      then(this: Promise<void>, onfulfilled, onrejected) {
-        return Promise.try(async () => {
-          for await (const _ of await superThen()) {
-            // 空のループで結果をすべて読み飛ばします。
-          }
-        }).then(onfulfilled, onrejected);
-      },
+        case "iter":
+          /**
+           * クエリー結果を非同期ジェネレーターとして取得します。
+           *
+           * @returns 非同期ジェネレーターを解決する Promise です。
+           */
+          return async function iter() {
+            const iter = await promise;
 
-      /**
-       * クエリー結果を非同期ジェネレーターとして取得します。
-       *
-       * @returns 非同期ジェネレーターを解決する Promise です。
-       */
-      async iter() {
-        const iter = await superThen();
+            return (async function* () {
+              yield* iter;
+            })();
+          };
 
-        return (async function* () {
-          yield* iter;
-        })();
-      },
+        case "collect":
+          /**
+           * クエリー結果の全行を配列として収集します。
+           *
+           * @returns 取得した行の配列を解決する Promise です。
+           */
+          return async function collect() {
+            const iter = await promise;
 
-      /**
-       * クエリー結果の全行を配列として収集します。
-       *
-       * @returns 取得した行の配列を解決する Promise です。
-       */
-      async collect() {
-        return await Array.fromAsync(await this.iter());
-      },
+            return await Array.fromAsync(iter);
+          };
+
+        default:
+          return Reflect.get(target, p, receiver);
+      }
     },
-  );
+  });
 }
 
 /**

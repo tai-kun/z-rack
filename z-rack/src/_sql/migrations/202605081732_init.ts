@@ -15,8 +15,10 @@ export default [
 // 主キーにはテキスト型のキーを使用し、値は JSON 形式で保存します。
 sql`
 CREATE TABLE ${configTable} (
-  key   TEXT PRIMARY KEY,
-  value JSON NOT NULL
+  key   TEXT,
+  value JSON NOT NULL,
+
+  CONSTRAINT "_z-rack-pkey-config-key" PRIMARY KEY (key)
 )
 `,
 
@@ -48,7 +50,7 @@ CREATE TABLE ${configTable} (
 // - user_metadata       ユーザーが独自に定義可能な属性を格納する JSON 形式のメタデータです。
 sql`
 CREATE TABLE ${privateMetadataTable} (
-  object_id UUID PRIMARY KEY,
+  object_id UUID,
 
   record_type      TEXT      NOT NULL,
   record_timestamp TIMESTAMP NOT NULL,
@@ -71,7 +73,9 @@ CREATE TABLE ${privateMetadataTable} (
   search_text        TEXT,
   text_search_format TEXT,
   object_tags        TEXT[],
-  user_metadata      JSONB
+  user_metadata      JSONB,
+
+  CONSTRAINT "_z-rack-pkey-private_metadata-object_id" PRIMARY KEY (object_id)
 )
 `,
 
@@ -94,7 +98,9 @@ CREATE UNIQUE INDEX "_z_rack-unq-private_metadata-entity_id" ON ${privateMetadat
 // システム内で使用されるすべての有効なオブジェクト ID を一元管理するための親テーブルです。これは、新しい UUID を生成する際に、予め衝突しないことが保証された UUID であると確定するために使用されます。
 sql`
 CREATE TABLE ${objectIdsTable} (
-  object_id UUID PRIMARY KEY
+  object_id UUID,
+
+  CONSTRAINT "_z-rack-pkey-object_ids-object_id" PRIMARY KEY (object_id)
 )
 `,
 
@@ -117,7 +123,9 @@ ON DELETE CASCADE;
 // システム内で使用されるすべての有効なエンティティー ID を一元管理するための親テーブルです。これは、新しい ID を生成する際に、予め衝突しないことが保証された ID であると確定するために使用されます。
 sql`
 CREATE TABLE ${entityIdsTable} (
-  entity_id TEXT PRIMARY KEY
+  entity_id TEXT,
+
+  CONSTRAINT "_z-rack-pkey-entity_ids-entity_id" PRIMARY KEY (entity_id)
 )
 `,
 
