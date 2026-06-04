@@ -39,9 +39,15 @@ import DatabaseClient from "./_database-client.js";
 import getUUIDv7 from "./_get-uuid-v7.js";
 import logger from "./_logger.js";
 import { MetadataSelectResultSchema } from "./_sql/_schemas.js";
-import { CreateMetadataSql, CreateMetadataOverwriteSql } from "./_sql/create.js";
 import {
+  CreateMetadataSql,
+  CreateMetadataOverwriteSql,
+  CreateMetadataResultSchema,
+} from "./_sql/create.js";
+import {
+  DeleteEntityIdSql,
   DeleteMetadataSql,
+  DeleteObjectIdSql,
   UpdateMetadataDeletedSql,
   UpdateMetadataDeletedResultSchema,
 } from "./_sql/delete.js";
@@ -213,11 +219,11 @@ export default class Metabase {
   /**
    * クラスのインスタンスを初期化します。
    *
-   * @param db データベースクライアントのインターフェースです。
    * @param schema 使用するデータベースのスキーマ名です。
+   * @param db データベースクライアントのインターフェースです。
    * @param ts テキスト検索の管理インスタンスです。
    */
-  public constructor(db: IDatabaseClient, schema: string, ts: TextSearch) {
+  public constructor(schema: string, db: IDatabaseClient, ts: TextSearch) {
     schema = sql.ident(schema);
     this.db = new DatabaseClient(db);
     this.ts = ts;
@@ -452,11 +458,11 @@ export default class Metabase {
    */
   public async close(signal: AbortSignal, reason: unknown): Promise<void> {
     // マイグレーションタスクを中止して完了を待ちます。
-    this.migrationTasks.abort();
+    this.migrationTasks.abort(reason);
     await this.migrationTasks.wait();
 
     // 削除タスクを中止して完了を待ちます。
-    this.deleteTasks.abort();
+    this.deleteTasks.abort(reason);
     await this.deleteTasks.wait();
 
     // データベース接続を閉じます。
@@ -594,15 +600,7 @@ export default class Metabase {
     } = input;
     const { objectId, timestamp } = await this.getObjectId(signal);
 
-    const sqlParts = function* () {
-      yield CreateMetadataSql;
-
-      if (overwriteMode) {
-        // 上書きモードが有効な場合は ON CONFLICT 句を追加します。
-        yield CreateMetadataOverwriteSql;
-      }
-    };
-    const builtSql = sql.join(sqlParts, "").fillAll({
+    const slots = {
       ...this.tables,
       entityId,
       language,
@@ -620,11 +618,31 @@ export default class Metabase {
       lastModifiedAt: timestampOption ?? timestamp,
       recordTimestamp: timestampOption ?? timestamp,
       textSearchFormat: this.textSearchFormat,
-    });
+    };
 
     try {
-      await this.db.query(signal, builtSql).collect();
-      this.db.requestFlush();
+      if (overwriteMode) {
+        const rows = await this.db
+          .query(signal, CreateMetadataOverwriteSql.fillAll(slots))
+          .collect();
+
+        this.db.requestFlush();
+
+        const oldEntityId = v.parseOutput(CreateMetadataResultSchema, rows);
+        if (oldEntityId != null && oldEntityId !== entityId) {
+          this.deleteTasks.add(async (signal) => {
+            await this.db.query(
+              signal,
+              DeleteEntityIdSql.fillAll({ ...this.tables, entityId: oldEntityId }),
+            );
+            this.db.requestFlush();
+          });
+        }
+      } else {
+        await this.db.query(signal, CreateMetadataSql.fillAll(slots));
+
+        this.db.requestFlush();
+      }
     } catch (ex) {
       if (isError(ex) && ex.message.startsWith(`Constraint Error: Duplicate key "_key: `)) {
         throw new ObjectExistsError({ key: String(key) }, { cause: ex });
@@ -1204,6 +1222,15 @@ export default class Metabase {
       requestDeletingMetadata: () => {
         this.deleteTasks.add(async (signal) => {
           await this.db.query(signal, DeleteMetadataSql.fillAll({ ...this.tables, objectId }));
+          this.db.requestFlush();
+        });
+        this.deleteTasks.add(async (signal) => {
+          await this.db.query(signal, DeleteObjectIdSql.fillAll({ ...this.tables, objectId }));
+          this.db.requestFlush();
+        });
+        this.deleteTasks.add(async (signal) => {
+          await this.db.query(signal, DeleteEntityIdSql.fillAll({ ...this.tables, entityId }));
+          this.db.requestFlush();
         });
       },
     };

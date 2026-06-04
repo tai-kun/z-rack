@@ -1,4 +1,5 @@
 import {
+  type EntityId,
   type ObjectId,
   type RecordTimestamp,
   v,
@@ -7,8 +8,11 @@ import {
 } from "@z-rack/core";
 import { sql } from "pgsql-template-tag";
 
+const entityIdsTable = sql.query("entityIdsTable");
+const objectIdsTable = sql.query("objectIdsTable");
 const privateMetadataTable = sql.query("privateMetadataTable");
 
+const entityId = sql.text("entityId").notNull().narrow<EntityId>();
 const objectId = sql.text("objectId").notNull().narrow<ObjectId>();
 const objectKey = sql.text("objectKey").notNull();
 const recordTimestamp = sql.timestamp("recordTimestamp").notNull().narrow<RecordTimestamp>();
@@ -65,4 +69,16 @@ export const DeleteMetadataSql = sql`
 DELETE FROM ${privateMetadataTable}
 WHERE
   object_id = ${objectId}
+`;
+
+export const DeleteObjectIdSql = sql`
+DELETE FROM ${objectIdsTable}
+WHERE
+  object_id = ${objectId}
+`;
+
+export const DeleteEntityIdSql = sql`
+DELETE FROM ${entityIdsTable}
+WHERE
+  entity_id = ${entityId}
 `;

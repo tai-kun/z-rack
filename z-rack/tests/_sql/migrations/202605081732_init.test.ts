@@ -68,7 +68,7 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       name: {
         dataType: "text",
         nullable: false,
-        indexNames: "_z-rack-pkey-migrations-name",
+        indexNames: "_z-rack-pk-migrations-name",
         foreignKey: null,
       },
       finished_at: {
@@ -83,7 +83,7 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       key: {
         dataType: "text",
         nullable: false,
-        indexNames: "_z-rack-pkey-config-key",
+        indexNames: "_z-rack-pk-config-key",
         foreignKey: null,
       },
       value: {
@@ -98,8 +98,8 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       entity_id: {
         dataType: "text",
         nullable: false,
-        indexNames: "_z-rack-pkey-entity_ids-entity_id",
-        foreignKey: "private_metadata(entity_id)",
+        indexNames: "_z-rack-pk-entity_ids-entity_id",
+        foreignKey: null,
       },
     },
 
@@ -107,8 +107,8 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       object_id: {
         dataType: "uuid",
         nullable: false,
-        indexNames: "_z-rack-pkey-object_ids-object_id",
-        foreignKey: "private_metadata(object_id)",
+        indexNames: "_z-rack-pk-object_ids-object_id",
+        foreignKey: null,
       },
     },
 
@@ -116,7 +116,7 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       object_id: {
         dataType: "uuid",
         nullable: false,
-        indexNames: "_z-rack-pkey-private_metadata-object_id",
+        indexNames: "_z-rack-pk-private_metadata-object_id",
         foreignKey: null,
       },
       record_type: {

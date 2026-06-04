@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS ${migrationsTable} (
   name        TEXT,
   finished_at TIMESTAMP,
 
-  CONSTRAINT "_z-rack-pkey-migrations-name" PRIMARY KEY (name)
+  CONSTRAINT "_z-rack-pk-migrations-name" PRIMARY KEY (name)
 )
 `,
 

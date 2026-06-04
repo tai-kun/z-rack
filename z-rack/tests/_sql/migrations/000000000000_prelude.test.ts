@@ -61,7 +61,7 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
       name: {
         dataType: "text",
         nullable: false,
-        indexNames: "_z-rack-pkey-migrations-name",
+        indexNames: "_z-rack-pk-migrations-name",
         foreignKey: null,
       },
       finished_at: {

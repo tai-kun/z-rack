@@ -621,7 +621,7 @@ function parseSetupParams(params: SetupParams) {
   );
 
   const ts = new TextSearch(textSearch);
-  const db = new Metabase(databaseClient, databaseSchema, ts);
+  const db = new Metabase(databaseSchema, databaseClient, ts);
   const io = storageSystem;
 
   return { db, io, ts };
@@ -1311,9 +1311,9 @@ export default class ZRack implements AsyncDisposable {
   //
   // -----------------------------------------------------------------------------------------------
 
-  public async renameObject(): Promise<void> {
-    throw new Error("実装されていません");
-  }
+  // public async renameObject(): Promise<void> {
+  //   throw new Error("実装されていません");
+  // }
 
   // -----------------------------------------------------------------------------------------------
   //

@@ -18,7 +18,7 @@ CREATE TABLE ${configTable} (
   key   TEXT,
   value JSON NOT NULL,
 
-  CONSTRAINT "_z-rack-pkey-config-key" PRIMARY KEY (key)
+  CONSTRAINT "_z-rack-pk-config-key" PRIMARY KEY (key)
 )
 `,
 
@@ -75,7 +75,7 @@ CREATE TABLE ${privateMetadataTable} (
   object_tags        TEXT[],
   user_metadata      JSONB,
 
-  CONSTRAINT "_z-rack-pkey-private_metadata-object_id" PRIMARY KEY (object_id)
+  CONSTRAINT "_z-rack-pk-private_metadata-object_id" PRIMARY KEY (object_id)
 )
 `,
 
@@ -100,22 +100,18 @@ sql`
 CREATE TABLE ${objectIdsTable} (
   object_id UUID,
 
-  CONSTRAINT "_z-rack-pkey-object_ids-object_id" PRIMARY KEY (object_id)
+  CONSTRAINT "_z-rack-pk-object_ids-object_id" PRIMARY KEY (object_id)
 )
 `,
 
 // 非公開メタデータテーブルへの外部キー制約の追加（object_id）
-//
-// メタデータが指すオブジェクト ID が、オブジェクト ID 管理テーブルに存在することを保証します。
-// - ON UPDATE RESTRICT  親のメタデータのオブジェクト ID が更新されるのを制限します。そもそもオブジェクト ID は変更されません。
-// - ON DELETE CASCADE   親のメタデータのオブジェクト ID が削除された場合、ID 管理テーブルからも削除します。
 sql`
-ALTER TABLE ${objectIdsTable}
+ALTER TABLE ${privateMetadataTable}
 ADD CONSTRAINT "_z_rack-fk-object_id"
 FOREIGN KEY (object_id)
-REFERENCES ${privateMetadataTable} (object_id)
+REFERENCES ${objectIdsTable} (object_id)
 ON UPDATE RESTRICT
-ON DELETE CASCADE;
+ON DELETE RESTRICT
 `,
 
 // エンティティー ID 管理テーブルの作成
@@ -125,22 +121,8 @@ sql`
 CREATE TABLE ${entityIdsTable} (
   entity_id TEXT,
 
-  CONSTRAINT "_z-rack-pkey-entity_ids-entity_id" PRIMARY KEY (entity_id)
+  CONSTRAINT "_z-rack-pk-entity_ids-entity_id" PRIMARY KEY (entity_id)
 )
-`,
-
-// 非公開メタデータテーブルへの外部キー制約の追加（entity_id）
-//
-// メタデータが指すエンティティー ID が、エンティティー ID 管理テーブルに存在することを保証します。
-// - ON UPDATE CASCADE  親のメタデータのエンティティー ID が更新された場合、ID 管理テーブルも更新します。
-// - ON DELETE CASCADE  親のメタデータのエンティティー ID が削除された場合、ID 管理テーブルからも削除します。
-sql`
-ALTER TABLE ${entityIdsTable}
-ADD CONSTRAINT "_z_rack-fk-entity_id"
-FOREIGN KEY (entity_id)
-REFERENCES ${privateMetadataTable} (entity_id)
-ON UPDATE CASCADE
-ON DELETE CASCADE;
 `,
 
 // 公開用メタデータビューの作成
