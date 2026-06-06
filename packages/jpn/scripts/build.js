@@ -20,3 +20,5 @@ fs.unlinkSync("./build/package.json");
 
 fs.mkdirSync("./dist", { recursive: true });
 fs.cpSync("./build", "./dist/build", { recursive: true });
+
+fs.unlinkSync("./dist/build/.gitignore");
