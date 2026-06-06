@@ -160,7 +160,7 @@ FROM old_row;
 `;
 
 export const CreateMetadataResultSchema = v.pipe(
-  v.array(v.object({ entity_id: (EntityIdSchema) })),
+  v.array(v.object({ entity_id: EntityIdSchema })),
   v.maxLength(1),
   v.transform((rows) => rows[0]?.entity_id),
 );
