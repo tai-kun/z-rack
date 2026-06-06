@@ -223,18 +223,29 @@ export default class Metabase {
    * @param db データベースクライアントのインターフェースです。
    * @param ts テキスト検索の管理インスタンスです。
    */
-  public constructor(schema: string, db: IDatabaseClient, ts: TextSearch) {
-    schema = sql.ident(schema);
+  public constructor(schema: string | undefined, db: IDatabaseClient, ts: TextSearch) {
     this.db = new DatabaseClient(db);
     this.ts = ts;
-    this.tables = {
-      configTable: sql.raw(`${schema}."_z_rack-config"`),
-      entityIdsTable: sql.raw(`${schema}."_z_rack-entity_ids"`),
-      objectIdsTable: sql.raw(`${schema}."_z_rack-object_ids"`),
-      migrationsTable: sql.raw(`${schema}."_z_rack-migrations"`),
-      publicMetadataTable: sql.raw(`${schema}."z_rack_metadata"`),
-      privateMetadataTable: sql.raw(`${schema}."_z_rack-metadata"`),
-    };
+    if (typeof schema === "string") {
+      schema = sql.ident(schema);
+      this.tables = {
+        configTable: sql.raw(`${schema}."_z_rack-config"`),
+        entityIdsTable: sql.raw(`${schema}."_z_rack-entity_ids"`),
+        objectIdsTable: sql.raw(`${schema}."_z_rack-object_ids"`),
+        migrationsTable: sql.raw(`${schema}."_z_rack-migrations"`),
+        publicMetadataTable: sql.raw(`${schema}."z_rack_metadata"`),
+        privateMetadataTable: sql.raw(`${schema}."_z_rack-metadata"`),
+      };
+    } else {
+      this.tables = {
+        configTable: sql.raw(`"_z_rack-config"`),
+        entityIdsTable: sql.raw(`"_z_rack-entity_ids"`),
+        objectIdsTable: sql.raw(`"_z_rack-object_ids"`),
+        migrationsTable: sql.raw(`"_z_rack-migrations"`),
+        publicMetadataTable: sql.raw(`"z_rack_metadata"`),
+        privateMetadataTable: sql.raw(`"_z_rack-metadata"`),
+      };
+    }
     this.deleteTasks = new IdleTaskQueue();
     this.migrationTasks = new IdleTaskQueue();
   }
@@ -713,20 +724,20 @@ export default class Metabase {
       yield SelectSql;
 
       yield sql.join(function* cols() {
-        if (select.id) yield IdColumnSql;
-        if (select.key) yield KeyColumnSql;
-        if (select.eTag) yield ETagColumnSql;
-        if (select.size) yield SizeColumnSql;
-        if (select.tags) yield TagsColumnSql;
-        if (select.entityId) yield EntityIdColumnSql;
-        if (select.language) yield LanguageColumnSql;
-        if (select.mimeType) yield MimeTypeColumnSql;
-        if (select.createdAt) yield CreatedAtColumnSql;
-        if (select.recordType) yield RecordTypeColumnSql;
-        if (select.description) yield DescriptionColumnSql;
-        if (select.userMetadata) yield UserMetadataColumnSql;
-        if (select.lastModifiedAt) yield LastModifiedAtColumnSql;
-        if (select.recordTimestamp) yield RecordTimestampColumnSql;
+        if (select.id === true) yield IdColumnSql;
+        if (select.key === true) yield KeyColumnSql;
+        if (select.eTag === true) yield ETagColumnSql;
+        if (select.size === true) yield SizeColumnSql;
+        if (select.tags === true) yield TagsColumnSql;
+        if (select.entityId === true) yield EntityIdColumnSql;
+        if (select.language === true) yield LanguageColumnSql;
+        if (select.mimeType === true) yield MimeTypeColumnSql;
+        if (select.createdAt === true) yield CreatedAtColumnSql;
+        if (select.recordType === true) yield RecordTypeColumnSql;
+        if (select.description === true) yield DescriptionColumnSql;
+        if (select.userMetadata === true) yield UserMetadataColumnSql;
+        if (select.lastModifiedAt === true) yield LastModifiedAtColumnSql;
+        if (select.recordTimestamp === true) yield RecordTimestampColumnSql;
       });
 
       yield ConditionsSql;
@@ -831,19 +842,19 @@ export default class Metabase {
       }
 
       yield sql.join(function* cols() {
-        if (select.id) yield IdColumnSql;
-        if (select.key) yield KeyColumnSql;
-        if (select.eTag) yield ETagColumnSql;
-        if (select.size) yield SizeColumnSql;
-        if (select.tags) yield TagsColumnSql;
-        if (select.language) yield LanguageColumnSql;
-        if (select.mimeType) yield MimeTypeColumnSql;
-        if (select.createdAt) yield CreatedAtColumnSql;
-        if (select.recordType) yield RecordTypeColumnSql;
-        if (select.description) yield DescriptionColumnSql;
-        if (select.userMetadata) yield UserMetadataColumnSql;
-        if (select.lastModifiedAt) yield LastModifiedAtColumnSql;
-        if (select.recordTimestamp) yield RecordTimestampColumnSql;
+        if (select.id === true) yield IdColumnSql;
+        if (select.key === true) yield KeyColumnSql;
+        if (select.eTag === true) yield ETagColumnSql;
+        if (select.size === true) yield SizeColumnSql;
+        if (select.tags === true) yield TagsColumnSql;
+        if (select.language === true) yield LanguageColumnSql;
+        if (select.mimeType === true) yield MimeTypeColumnSql;
+        if (select.createdAt === true) yield CreatedAtColumnSql;
+        if (select.recordType === true) yield RecordTypeColumnSql;
+        if (select.description === true) yield DescriptionColumnSql;
+        if (select.userMetadata === true) yield UserMetadataColumnSql;
+        if (select.lastModifiedAt === true) yield LastModifiedAtColumnSql;
+        if (select.recordTimestamp === true) yield RecordTimestampColumnSql;
       });
 
       yield BasicConditionsSql;
@@ -894,10 +905,10 @@ export default class Metabase {
       ...this.tables,
       skip: sql.raw(skip.toString(10)),
       take: sql.raw(take.toString(10)),
-      minLength: prefixSegments.length,
-      basenameIndex: sql.raw(prefixSegments.length.toString(10)),
+      minLength: prefixSegments.length + 1,
+      basenameIndex: sql.raw((prefixSegments.length + 1).toString(10)),
       orderDirection: sql.raw(order.direction),
-      objectKeySegmentCount: prefixSegments.length,
+      objectKeySegmentCount: prefixSegments.length + 1,
     });
 
     const RowSchema = MetadataSelectResultSchema(select);
@@ -992,19 +1003,19 @@ export default class Metabase {
       yield SelectSql;
 
       yield sql.join(function* cols() {
-        if (select.id) yield IdColumnSql;
-        if (select.key) yield KeyColumnSql;
-        if (select.eTag) yield ETagColumnSql;
-        if (select.size) yield SizeColumnSql;
-        if (select.tags) yield TagsColumnSql;
-        if (select.language) yield LanguageColumnSql;
-        if (select.mimeType) yield MimeTypeColumnSql;
-        if (select.createdAt) yield CreatedAtColumnSql;
-        if (select.recordType) yield RecordTypeColumnSql;
-        if (select.description) yield DescriptionColumnSql;
-        if (select.userMetadata) yield UserMetadataColumnSql;
-        if (select.lastModifiedAt) yield LastModifiedAtColumnSql;
-        if (select.recordTimestamp) yield RecordTimestampColumnSql;
+        if (select.id === true) yield IdColumnSql;
+        if (select.key === true) yield KeyColumnSql;
+        if (select.eTag === true) yield ETagColumnSql;
+        if (select.size === true) yield SizeColumnSql;
+        if (select.tags === true) yield TagsColumnSql;
+        if (select.language === true) yield LanguageColumnSql;
+        if (select.mimeType === true) yield MimeTypeColumnSql;
+        if (select.createdAt === true) yield CreatedAtColumnSql;
+        if (select.recordType === true) yield RecordTypeColumnSql;
+        if (select.description === true) yield DescriptionColumnSql;
+        if (select.userMetadata === true) yield UserMetadataColumnSql;
+        if (select.lastModifiedAt === true) yield LastModifiedAtColumnSql;
+        if (select.recordTimestamp === true) yield RecordTimestampColumnSql;
       });
 
       yield BasicConditionsSql;
@@ -1148,28 +1159,40 @@ export default class Metabase {
 
       yield BaseSql;
 
-      if (metadata.tags !== undefined) yield TagsColumnSql;
-      if (metadata.language !== undefined) yield LanguageColumnSql;
-      if (metadata.mimeType !== undefined) yield MimeTypeColumnSql;
-      if (metadata.timestamp !== undefined) {
-        yield LastModifiedAtColumnSql;
-        yield RecordTimestampColumnSql;
+      if (metadata.tags !== undefined) {
+        yield TagsColumnSql.fillAll({ objectTags: sql.join(metadata.tags) });
       }
-      if (metadata.searchText !== undefined) yield SearchTextColumnSql;
-      if (metadata.description !== undefined) yield DescriptionColumnSql;
-      if (metadata.userMetadata !== undefined) yield UserMetadataColumnSql;
+      if (metadata.language !== undefined) {
+        yield LanguageColumnSql.fillAll({ language: metadata.language });
+      }
+      if (metadata.mimeType !== undefined) {
+        yield MimeTypeColumnSql.fillAll({ mimeType: metadata.mimeType });
+      }
+      {
+        const timestamp = metadata.timestamp ?? (Date.now() as Timestamp);
+        yield LastModifiedAtColumnSql.fillAll({ lastModifiedAt: timestamp });
+        yield RecordTimestampColumnSql.fillAll({ recordTimestamp: timestamp });
+      }
+      if (metadata.searchText !== undefined) {
+        yield SearchTextColumnSql.fillAll({ searchText: metadata.searchText });
+      }
+      if (metadata.description !== undefined) {
+        yield DescriptionColumnSql.fillAll({ description: metadata.description });
+      }
+      if (metadata.userMetadata !== undefined) {
+        yield UserMetadataColumnSql.fillAll({ userMetadata: json(metadata.userMetadata) });
+      }
 
       yield ConditionSql;
     };
     const builtSql = sql.join(sqlParts, "").fillAll({
       ...this.tables,
-      ...(metadata as any),
       objectKey: String(where.key),
     });
 
     const rows = await this.db.query(signal, builtSql).collect();
-    const found = v.expect(UpdateMetadataResultSchema, rows);
-    if (found) {
+    const isUpdated = v.expect(UpdateMetadataResultSchema, rows);
+    if (isUpdated) {
       return;
     }
 

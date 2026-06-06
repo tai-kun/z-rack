@@ -12,6 +12,8 @@ const objectKeyPrefix = sql.query("objectKeyPrefix");
 const objectKeySegment = sql.text("objectKeySegment").notNull();
 const textSearchFormat = sql.text("textSearchFormat").notNull();
 
+const tsIndex = sql.raw(sql.literal("_z_rack-idx-private_metadata-search_text"));
+
 /**
  * 検索スコアを算出する SELECT 句の開始部分を定義する SQL フラグメントです。
  *
@@ -19,7 +21,7 @@ const textSearchFormat = sql.text("textSearchFormat").notNull();
  */
 export const SearchMetadataSelectSql = sql`
 SELECT
-  (search_text <@> to_bm25query(${query}, '_z_rack-idx-private_metadata-search_text')) * -1 AS score,`;
+  (search_text <@> to_bm25query(${query}, ${tsIndex})) * -1 AS score,`;
 
 /**
  * 検索スコア算出クエリーにおける、対象テーブルと基本的な抽出条件（FROM 句および WHERE 句）を定義する SQL フラグメントです。
@@ -54,14 +56,15 @@ export const SearchMetadataPathSegmentConditionSql = sql` AND
  * 算出された検索スコアが指定された閾値より大きいデータのみに絞り込む条件（AND 句）を追加する SQL フラグメントです。
  */
 export const SearchMetadataScoreConditionSql = sql` AND
-  (search_text <@> to_bm25query(${query}, '_z_rack-idx-private_metadata-search_text')) * -1 > ${score}`;
+  (search_text <@> to_bm25query(${query}, ${tsIndex})) * -1 > ${score}`;
 
 /**
  * スコアの降順ソートおよびページネーション（LIMIT/OFFSET）を適用する SQL フラグメントです。
  */
 export const SearchMetadataOrderAndPaginationSql = sql`
 ORDER BY
-  score DESC
+  score DESC,
+  _key ASC
 LIMIT ${take}
 OFFSET ${skip}
 `;

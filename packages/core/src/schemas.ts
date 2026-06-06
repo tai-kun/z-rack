@@ -242,7 +242,7 @@ export const MIN_OBJECT_TAG_BYTES = 0 as Uint;
 
 export const MAX_OBJECT_TAG_BYTES = (128 * B) as Uint;
 
-export const ObjectTagSchema = v.pipe(Utf8Schema(MIN_OBJECT_TAG_BYTES), v.brand("ObjectTag"));
+export const ObjectTagSchema = v.pipe(Utf8Schema(MAX_OBJECT_TAG_BYTES), v.brand("ObjectTag"));
 
 export type ObjectTagLike = v.InferInput<typeof ObjectTagSchema>;
 
