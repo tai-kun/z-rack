@@ -117,7 +117,7 @@ test("期待するスキーマになっている", async ({ db, expect, signal }
         dataType: "uuid",
         nullable: false,
         indexNames: "_z-rack-pk-private_metadata-object_id",
-        foreignKey: null,
+        foreignKey: "object_ids(object_id)",
       },
       record_type: {
         dataType: "text",
