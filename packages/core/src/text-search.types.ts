@@ -4,6 +4,19 @@ import type { LanguageLike, Language } from "./schemas.js";
 
 /**
  * テキスト検索に関連する型定義を格納する名前空間です。
+ *
+ * @example
+ * ```
+ * import type { ITextSearch } from "@z-rack/core";
+ *
+ * function createConfig(): ITextSearch.NormalizeArgs {
+ *   return {
+ *     language: "jpn",
+ *     text: "テキスト",
+ *     signal: new AbortController().signal,
+ *   };
+ * }
+ * ```
  */
 export namespace ITextSearch {
   /**
@@ -26,7 +39,13 @@ export namespace ITextSearch {
     signal: AbortSignal;
   };
 
+  /**
+   * 言語を検出する際の引数定義です。
+   */
   export type DetectLanguageArgs = {
+    /**
+     * 言語判定の対象となる文字列データです。
+     */
     text: string;
 
     /**
@@ -78,6 +97,23 @@ export namespace ITextSearch {
 
 /**
  * テキスト検索およびトークンナイズの振る舞いを規定するインターフェースです。
+ *
+ * @example
+ * ```
+ * import type { ITextSearch } from "@z-rack/core";
+ *
+ * class MySearch implements ITextSearch {
+ *   readonly format = "my-format";
+ *   readonly textConfig = "simple";
+ *   readonly defaultLanguage = "eng";
+ *   readonly supportedLanguages = ["eng"];
+ *   readonly isOpen = true;
+ *
+ *   tokenize(args: ITextSearch.TokenizeArgs): readonly string[] {
+ *     return args.text.split(/\s+/);
+ *   }
+ * }
+ * ```
  */
 export interface ITextSearch {
   /**
@@ -158,6 +194,12 @@ export interface ITextSearch {
    */
   close?(args: ITextSearch.CloseArgs): MaybePromise<void>;
 
+  /**
+   * テキストの言語を自動検出します。
+   *
+   * @param args 言語検出に必要なテキストおよび制御用パラメーターです。
+   * @returns 検出された言語コード（ISO 639-2 Tコード）です。
+   */
   detectLanguage?(args: ITextSearch.DetectLanguageArgs): MaybePromise<LanguageLike>;
 
   /**

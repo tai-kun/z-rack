@@ -14,10 +14,12 @@ declare global {
 }
 
 /**
- * WASM モジュールを一度だけ読み込むための非同期関数です。
+ * WASM モジュールを一度だけ読み込み、グローバル状態にバインドします。
  *
- * @param signal 中断を制御するための中断シグナルです。
- * @returns 読み込みが完了すると解決される Promise です。
+ * 内部的に `once` を使用し、同一 WASM ソースに対する重複読み込みを防止します。
+ * 読み込み後、wasm-bindgen のグルーコードと WASM インスタンスを接続し、初期化関数を実行します。
+ *
+ * @param signal 中断シグナルです。
  */
 export default async function loadVibratoWasmOnce(signal: AbortSignal): Promise<void> {
   const wasmSource = globalThis._z_rack_jpn__vibrato_wasm_source;
@@ -25,7 +27,6 @@ export default async function loadVibratoWasmOnce(signal: AbortSignal): Promise<
     throw new VibratoNotOpenError();
   }
 
-  // 重複した読み込みを防ぎつつ、WASM を初期化します。
   await once(wasmSource, signal, async (signal) => {
     const wasm = await loadWasm<typeof WasmExports>(wasmSource, {
       signal,

@@ -6,6 +6,17 @@ import { NinjaPromise } from "ninja-promise";
  *
  * @param signal 操作の中断を監視するための中断シグナルインスタンスです。
  * @returns 初期状態が保留で、中断時にのみ拒否される NinjaPromise です。
+ *
+ * @example
+ * ```
+ * import createAbortPromise from "@z-rack/core/create-abort-promise";
+ *
+ * const ac = new AbortController();
+ * const promise = createAbortPromise(ac.signal);
+ *
+ * ac.abort(new Error("キャンセルしました"));
+ * await promise; // => Error: キャンセルしました
+ * ```
  */
 export default function createAbortPromise(signal: AbortSignal): NinjaPromise<never> {
   throwIfAborted(signal);

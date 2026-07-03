@@ -11,6 +11,19 @@ const SLASH = 47;
 
 /**
  * オブジェクトキーを解析するためのクラスです。
+ *
+ * @example
+ * ```
+ * import ObjectKey from "@z-rack/core/object-key";
+ *
+ * const key = ObjectKey.parse("foo/bar/baz.txt");
+ * key.segments;   // => ["foo", "bar", "baz.txt"]
+ * key.basename;   // => "baz.txt"
+ * key.filename;   // => "baz"
+ * key.extname;    // => ".txt"
+ * key.prefix;     // => "foo/bar/"
+ * key.toJSON();   // => "foo/bar/baz.txt"
+ * ```
  */
 export default class ObjectKey {
   /**
@@ -18,6 +31,13 @@ export default class ObjectKey {
    *
    * @param objectKey 検証対象のオブジェクトキー文字列です。
    * @returns 有効なキーであれば true、そうでなければ false を返します。
+   *
+   * @example
+   * ```
+   * ObjectKey.check("valid/key");   // => true
+   * ObjectKey.check("");           // => false
+   * ObjectKey.check(" ".repeat(9999)); // => false
+   * ```
    */
   public static check(objectKey: string): boolean {
     try {
@@ -34,6 +54,12 @@ export default class ObjectKey {
    *
    * @param objectKey 解析対象のオブジェクトキー文字列です。
    * @returns 生成された ObjectKey インスタンスです。
+   *
+   * @example
+   * ```
+   * const key = ObjectKey.parse("data/file.json");
+   * key.key; // => "data/file.json"
+   * ```
    */
   public static parse(objectKey: string): ObjectKey {
     return new ObjectKey(objectKey);
@@ -109,6 +135,11 @@ export default class ObjectKey {
    * オブジェクトキーをスラッシュで区切ったセグメントの配列を取得します。
    *
    * 配列は少なくとも 1 つの要素を含んでいます。
+   *
+   * @example
+   * ```
+   * ObjectKey.parse("a/b/c").segments; // => ["a", "b", "c"]
+   * ```
    */
   public get segments(): [...string[], string] {
     if (this.#segments === undefined) {
@@ -135,6 +166,12 @@ export default class ObjectKey {
    * オブジェクトキーの接頭辞です。
    *
    * 接頭辞は、セグメント（{@link segments}）をスラッシュで結合した文字列です。
+   *
+   * @example
+   * ```
+   * ObjectKey.parse("a/b/c").prefix; // => "a/b/"
+   * ObjectKey.parse("root").prefix;  // => ""
+   * ```
    */
   public get prefix(): string {
     return (this.#prefix ??= this.segments.slice(0, -1).join("/") + "/");
@@ -142,6 +179,11 @@ export default class ObjectKey {
 
   /**
    * オブジェクトキーをスラッシュで区切ったときの末尾部分です。
+   *
+   * @example
+   * ```
+   * ObjectKey.parse("a/b/file.txt").basename; // => "file.txt"
+   * ```
    */
   public get basename(): string {
     if (this.#basename === undefined) {
@@ -156,6 +198,13 @@ export default class ObjectKey {
    * オブジェクトキーをファイルパスとみなしたときの、拡張子を除いたファイル名を取得します。
    *
    * ファイル名はベース名（{@link basename}）から拡張子を取り除いた文字列です。
+   *
+   * @example
+   * ```
+   * ObjectKey.parse("archive.tar.gz").filename; // => "archive.tar"
+   * ObjectKey.parse(".hidden").filename;        // => ".hidden"
+   * ObjectKey.parse("Makefile").filename;       // => "Makefile"
+   * ```
    */
   public get filename(): string {
     if (this.#filename === undefined) {
@@ -182,6 +231,12 @@ export default class ObjectKey {
 
   /**
    * ファイル名の拡張子（ドットを含む）を取得します。
+   *
+   * @example
+   * ```
+   * ObjectKey.parse("archive.tar.gz").extname; // => ".gz"
+   * ObjectKey.parse(".hidden").extname;        // => ""
+   * ```
    */
   public get extname(): string {
     if (this.#extname === undefined) {
@@ -206,6 +261,12 @@ export default class ObjectKey {
    * JSON シリアライズ時に呼び出され、オブジェクトキーを返します。
    *
    * @returns オブジェクトキーです。
+   *
+   * @example
+   * ```
+   * JSON.stringify(ObjectKey.parse("foo/bar"));
+   * // => '"foo/bar"'
+   * ```
    */
   public toJSON(): string {
     return this.#string;
@@ -215,6 +276,11 @@ export default class ObjectKey {
    * オブジェクトを文字列に変換する際に呼び出され、オブジェクトキーを返します。
    *
    * @returns オブジェクトキーです。
+   *
+   * @example
+   * ```
+   * String(ObjectKey.parse("foo/bar")); // => "foo/bar"
+   * ```
    */
   public toString(): string {
     return this.#string;

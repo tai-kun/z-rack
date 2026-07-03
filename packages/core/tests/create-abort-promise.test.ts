@@ -22,28 +22,28 @@ afterEach(() => {
 
 describe("AbortSignal の状態監視", () => {
   test("既に中断されている AbortSignal を渡したとき、即座に例外を投げる", ({ expect }) => {
-    // Arrange
+    // 準備
     const controller = new AbortController();
     controller.abort(new Error("Already aborted"));
     const signal = controller.signal;
 
-    // Act & Assert
+    // 実行と検証
     expect(() => createAbortPromise(signal)).toThrow("Already aborted");
   });
 
   test("保留中の AbortSignal が後から中断されたとき、Promise が指定された理由で reject される", async ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const controller = new AbortController();
     const signal = controller.signal;
     const customError = new Error("Abort target");
 
-    // Act
+    // 実行
     const promise = createAbortPromise(signal);
     controller.abort(customError);
 
-    // Assert
+    // 検証
     await expect(promise).rejects.toThrow(customError);
   });
 });

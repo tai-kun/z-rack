@@ -8,11 +8,9 @@ import once from "./_once.js";
 import { VibratoNotOpenError, VibratoChecksumError } from "./errors.js";
 
 /**
- * Vibrato の辞書データを表す型定義です。
+ * zstd 圧縮された Vibrato 辞書データ、またはその参照情報です。
  *
- * 直接的なバイナリーデータ（Uint8Array）、または外部 URL とチェックサムのペアを受け入れます。
- *
- * 辞書ファイルは Zstandard で圧縮されている必要があります。
+ * 直接バイナリデータを渡すか、URL と SHA-256 チェックサムのペアを指定します。
  */
 export type VibratoDictionaryDataZstd =
   | Uint8Array
@@ -29,25 +27,33 @@ export type VibratoDictionaryDataZstd =
     };
 
 /**
- * Vibrato インスタンスの初期化時に指定するオプションの型定義です。
+ * `Vibrato` コンストラクターのオプションです。
  */
 export type VibratoOptions = {
   /**
-   * トークン化の際に取り除く（無視する）品詞のリストです。
+   * トークン化の際に除外する品詞のリストです。
+   *
+   * @default []
    */
   readonly omitPos?: Iterable<string> | undefined;
 };
 
 /**
- * Vibrato アルゴリズムを使用したテキスト検索および形態素解析機能を提供するクラスです。
+ * Vibrato 形態素解析器を用いたテキスト検索機能を提供します。
+ *
+ * zstd 圧縮された辞書データから WASM 版の Vibrato トークナイザーを構築し、日本語の形態素解析と英語の空白分割によるトークン化を行います。
  *
  * {@link ITextSearch} インターフェースを実装しています。
  */
 export default class Vibrato implements ITextSearch {
   /**
-   * 使用する WASM ソースをグローバルに設定します。
+   * 使用する WASM モジュールのソースをグローバルに設定します。
    *
-   * @param wasmSource ロード対象の WASM ソース情報です。
+   * このメソッドはインスタンス化前に一度だけ呼び出す必要があります。
+   *
+   * 設定されたソースは `_z_rack_jpn__vibrato_wasm_source` に格納され、全インスタンスで共有されます。
+   *
+   * @param wasmSource WASM モジュールのソースです。
    */
   public static setWasmSource(wasmSource: WasmSource): void {
     logger.debug`WASM source set globally`;
@@ -55,11 +61,6 @@ export default class Vibrato implements ITextSearch {
     globalThis._z_rack_jpn__vibrato_wasm_source = wasmSource;
   }
 
-  /**
-   * 内部状態を管理する非公開プロパティーです。
-   *
-   * 初期化状態に応じて、WASM インスタンス、URL 情報、または未処理の辞書データを保持します。
-   */
   #wasm:
     | { readonly vibrato: vibrato.VibratoWasm }
     | {
@@ -68,11 +69,13 @@ export default class Vibrato implements ITextSearch {
       }
     | { readonly dictData: Uint8Array };
 
-  /**
-   * 除外対象となる品詞の内部リストです。
-   */
   readonly #omitPos: readonly string[];
 
+  /**
+   * インスタンスを識別するフォーマットクエリー文字列です。
+   *
+   * パッケージ名、バージョン、クラス名、辞書チェックサム、除外品詞がエンコードされています。
+   */
   public readonly format: string;
 
   public readonly textConfig: "simple";
@@ -82,22 +85,17 @@ export default class Vibrato implements ITextSearch {
   public readonly supportedLanguages: readonly ["jpn", "eng"];
 
   /**
-   * Vibrato クラスの新しいインスタンスを作成します。
-   *
-   * @param dictionaryDataZstd zstd 圧縮された辞書データ、またはその参照情報です。
-   * @param options 解析時のオプション設定です。
+   * @param dictionaryDataZstd zstd 圧縮された辞書データ、または URL とチェックサムのペアです。
+   * @param options オプションです。
    */
   public constructor(dictionaryDataZstd: VibratoDictionaryDataZstd, options: VibratoOptions = {}) {
-    // 辞書データのチェックサムを計算、または取得します。
     const dictChecksum =
       dictionaryDataZstd instanceof Uint8Array
         ? bytesToHex(sha256(dictionaryDataZstd))
         : dictionaryDataZstd.checksum;
 
-    // 除外品詞リストを正規化します。
     const omitPos = [...new Set(options.omitPos || [])].sort();
 
-    // 内部状態を識別するためのフォーマットクエリーパラメーターを構築します。
     const fmt = new URLSearchParams();
     fmt.append("package", "@z-rack/jpn");
     fmt.append("version", "0");
@@ -125,26 +123,34 @@ export default class Vibrato implements ITextSearch {
     logger.debug`Vibrato instance created with format: ${this.format}`;
   }
 
+  /**
+   * インスタンスが開かれており、トークン化の準備ができているかを示します。
+   */
   public get isOpen(): boolean {
     return "vibrato" in this.#wasm;
   }
 
+  /**
+   * インスタンスを初期化し、トークン化の準備をします。
+   *
+   * 1. WASM モジュールをロードします（初回のみ）。
+   * 2. 辞書が URL 指定の場合はダウンロードし、SHA-256 チェックサムを検証します。
+   * 3. 辞書データから WASM トークナイザーを構築します。
+   *
+   * @param args オープン引数です。`signal` で処理を中断できます。
+   */
   public async open(args: ITextSearch.OpenArgs): Promise<void> {
-    // 既に初期化済みの場合は何もしません。
     if ("vibrato" in this.#wasm) {
       return;
     }
 
     const { signal } = args;
 
-    // WASM モジュール自体のロードを確実に実行します。
     await loadVibratoWasmOnce(signal);
 
-    // 状態が URL 参照である場合、ネットワーク経由で辞書データを取得します。
     if ("dictUrl" in this.#wasm) {
       const { dictUrl, checksum } = this.#wasm;
 
-      // 同一チェックサムの辞書取得が重複しないように制御しつつ、データを取得します。
       const dictData = await once(`vibrato_dict_${checksum}`, signal, async (signal) => {
         const resp = await fetch(dictUrl, { signal, redirect: "follow" });
         if (resp.status !== 200) {
@@ -155,7 +161,6 @@ export default class Vibrato implements ITextSearch {
         const data = new Uint8Array(buff);
         const hash = bytesToHex(sha256(data));
 
-        // 取得したデータの整合性をチェックサムで検証します。
         if (hash !== checksum) {
           throw new VibratoChecksumError({
             actual: hash,
@@ -168,38 +173,52 @@ export default class Vibrato implements ITextSearch {
       this.#wasm = { dictData };
     }
 
-    // 取得済みのバイナリーデータから、Vibrato WASM のラッパークラスをインスタンス化します。
     const { dictData } = this.#wasm;
     this.#wasm = {
       vibrato: vibrato.VibratoWasm.from_zstd(dictData, true),
     };
   }
 
+  /**
+   * インスタンスを閉じ、WASM リソースを解放します。
+   */
   public close(): void {
     if ("vibrato" in this.#wasm) {
       this.#wasm.vibrato.free();
     }
   }
 
+  /**
+   * テキストを NFKC 正規化します。
+   *
+   * @param args 正規化するテキストです。
+   * @returns NFKC 正規化された文字列です。
+   */
   public normalize(args: Pick<ITextSearch.NormalizeArgs, "text">): string {
     const { text } = args;
     return text.normalize("NFKC");
   }
 
+  /**
+   * テキストをトークン化します。
+   *
+   * - 言語が `"eng"` の場合は空白区切りで分割します。
+   * - 言語が `"jpn"` の場合は Vibrato で形態素解析し、`omitPos` に該当する品詞を除外します。
+   *
+   * @param args トークン化するテキストと言語です。
+   * @returns トークンの配列です。
+   */
   public tokenize(args: Pick<ITextSearch.TokenizeArgs, "language" | "text">): string[] {
-    // 解析インスタンスが準備できていない場合は処理を中断します。
     if (!("vibrato" in this.#wasm)) {
       throw new VibratoNotOpenError();
     }
 
     const { text, language } = args;
 
-    // 空文字列の場合は空の配列を返します。
     if (text === "") {
       return [];
     }
 
-    // 英語（"eng"）の場合は、単純な空白区切りでトークン化します。
     if (language === "eng") {
       return text.split(/\s+/g);
     }
@@ -207,10 +226,8 @@ export default class Vibrato implements ITextSearch {
     const { vibrato } = this.#wasm;
 
     if (this.#omitPos.length > 0) {
-      // 特定の品詞を除外してトークン化を実行します。
       return vibrato.tokenize(text, this.#omitPos.slice());
     } else {
-      // すべての形態素を取得します。
       return vibrato.tokenize_all(text);
     }
   }

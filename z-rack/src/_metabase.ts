@@ -346,7 +346,7 @@ export default class Metabase {
           // PostgreSQL のテキスト検索拡張機能を作成します。
           await tx.query(CreatePgTextsearchExtensionSql);
 
-          // テキスト検索フォーマットのハッシュ値を計算して既存の設定と比較し、異なっていればインデックスを作り直しtます。
+          // テキスト検索フォーマットのハッシュ値を計算して既存の設定と比較し、異なっていればインデックスを作り直します。
           const textSearchFormat = hash(this.ts.format);
           const textSearchFormatHash = await tx
             .query(FindTextSearchFormatHashConfigSql.fillAll(this.tables))
@@ -546,6 +546,12 @@ export default class Metabase {
     }
   }
 
+  /**
+   * 新しいエンティティー ID を生成して登録します。
+   *
+   * @param signal 処理を中断するためのシグナルです。
+   * @returns 生成されたエンティティー ID です。
+   */
   public async getEntityId(signal: AbortSignal): Promise<EntityId> {
     while (true) {
       try {
@@ -656,7 +662,7 @@ export default class Metabase {
       }
     } catch (ex) {
       if (isError(ex) && ex.message.startsWith(`Constraint Error: Duplicate key "_key: `)) {
-        throw new ObjectExistsError({ key: String(key) }, { cause: ex });
+        throw new ObjectExistsError({ key: String(key), cause: ex });
       }
 
       throw ex;
@@ -762,6 +768,15 @@ export default class Metabase {
   //
   // -----------------------------------------------------------------------------------------------
 
+  /**
+   * 条件に合致するメタデータを複数件検索し、非同期ジェネレーターとして取得します。
+   *
+   * プレフィックスがスラッシュで終わる場合はディレクトリー配下の検索とみなし、
+   * ベースネームの重複排除と効率的なセグメントクエリーを適用します。
+   *
+   * @param input 検索条件と取得プロパティーを含む入力オブジェクトです。
+   * @returns メタデータを順次返す非同期ジェネレーターです。
+   */
   public async findMany(
     input: Readonly<{
       select: Readonly<{

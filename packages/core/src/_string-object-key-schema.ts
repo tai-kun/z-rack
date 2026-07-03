@@ -3,6 +3,15 @@ import * as v from "./valibot.js";
 
 /**
  * 文字列表現のオブジェクトキーとしての妥当性を検証し、バイト列へ変換するためのスキーマ定義です。
+ *
+ * @example
+ * ```
+ * import StringObjectKeySchema from "./_string-object-key-schema.js";
+ *
+ * StringObjectKeySchema.parse("foo/bar");    // => "foo/bar"
+ * StringObjectKeySchema.parse("");           // => 例外
+ * StringObjectKeySchema.parse("a".repeat(9999)); // => 例外
+ * ```
  */
 const StringObjectKeySchema = v.pipe(
   // オブジェクトキーは文字列である必要があります。

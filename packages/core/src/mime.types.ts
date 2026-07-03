@@ -1,3 +1,6 @@
+/**
+ * IANA に登録されている標準的な MIME タイプと、それに対応するファイル拡張子の一覧です。
+ */
 // node -e 'Object.entries(require("mime/types/standard.js").default).map(t => console.log(`| "${t}"`))'
 export type StandardMimeType =
   | "application/andrew-inset,ez"

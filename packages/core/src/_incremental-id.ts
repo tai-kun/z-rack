@@ -1,5 +1,15 @@
 /**
  * 一意な数値を順番に発行するクラスです。
+ *
+ * @example
+ * ```
+ * import IncrementalId from "./_incremental-id.js";
+ *
+ * const id = new IncrementalId();
+ * id.get(); // => 1
+ * id.get(); // => 2
+ * id.get(); // => 3
+ * ```
  */
 export default class IncrementalId {
   /**

@@ -8,6 +8,15 @@ import { UnreachableError } from "./errors.js";
  * 網羅性チェックを強化するために使用されます。
  *
  * @returns 戻り値はありません。この関数は常にエラーを投げます。
+ *
+ * @example
+ * ```
+ * import { unreachable } from "@z-rack/core";
+ *
+ * function assertNever(x: never): never {
+ *   unreachable(x);
+ * }
+ * ```
  */
 function unreachable(): never;
 
@@ -18,6 +27,21 @@ function unreachable(): never;
  *
  * @param value 到達してはならない値です。TypeScript の `never` 型として扱われます。
  * @returns 戻り値はありません。この関数は常にエラーを投げます。
+ *
+ * @example
+ * ```
+ * import { unreachable } from "@z-rack/core";
+ *
+ * type Shape = "circle" | "square";
+ *
+ * function area(shape: Shape, size: number): number {
+ *   switch (shape) {
+ *     case "circle": return Math.PI * size * size;
+ *     case "square": return size * size;
+ *     default: unreachable(shape);
+ *   }
+ * }
+ * ```
  */
 function unreachable(value: never): never;
 

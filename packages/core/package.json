@@ -32,24 +32,24 @@
     "@tai-kun/valibot-extra-lab": "^0.0.5",
     "abort-signal-utils": "^0.0.3",
     "fast-utf8": "^0.0.7",
-    "i18n-error-base": "^0.0.4",
+    "i18n-error-base": "^0.0.7",
     "inspect-lite": "^0.0.2",
     "maypromise": "^0.0.4",
-    "ninja-promise": "^0.0.3",
+    "ninja-promise": "^0.0.4",
     "try-capture-stack-trace": "^0.0.3",
     "type-name": "^2.0.2"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
     "@tsconfig/strictest": "^2.0.8",
-    "@types/node": "^24.12.4",
+    "@types/node": "^24.13.2",
     "@types/type-name": "^1.0.32",
-    "@vitest/browser": "^4.1.7",
-    "@vitest/browser-playwright": "^4.1.7",
+    "@vitest/browser": "^4.1.9",
+    "@vitest/browser-playwright": "^4.1.9",
     "npm-check-updates": "^20.0.2",
-    "playwright": "^1.60.0",
-    "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "playwright": "^1.61.1",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
   },
   "peerDependencies": {
     "@logtape/logtape": "^2.0.0",

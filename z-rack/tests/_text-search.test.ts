@@ -14,7 +14,7 @@ describe("コンストラクターの初期化と検証", () => {
   test("最小構成の設定を持つオブジェクトを渡したとき、インスタンスが正常に生成されて各プロパティーに値が正しく格納される", ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -23,10 +23,10 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.format).toBe("text");
     expect(ts.textConfig).toBe("simple");
     expect(ts.bm25Params).toStrictEqual({ k1: 1.2, b: 0.75 });
@@ -34,7 +34,7 @@ describe("コンストラクターの初期化と検証", () => {
   });
 
   test("BM25 パラメーターの k1 を指定して初期化を試みたとき、それが設定される", ({ expect }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -46,15 +46,15 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.bm25Params).toStrictEqual({ k1: 0.9, b: 0.75 });
   });
 
   test("BM25 パラメーターの b を指定して初期化を試みたとき、それが設定される", ({ expect }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -66,15 +66,15 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.bm25Params).toStrictEqual({ k1: 1.2, b: 0.8 });
   });
 
   test("BM25 パラメーターを指定して初期化を試みたとき、それらが設定される", ({ expect }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -87,17 +87,17 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.bm25Params).toStrictEqual({ k1: 0.9, b: 0.8 });
   });
 
   test("Set 形式のサポート言語リストを渡したとき、重複なく正常に読み込まれて検証用スキーマが正しく構築される", ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -106,17 +106,17 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.SupportedLanguageSchema.expects).toBe('("eng" | "jpn")');
   });
 
   test("重複のある配列形式のサポート言語リストを渡したとき、重複が排除されて内部に保持される", ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -125,17 +125,17 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act
+    // 実行
     const ts = new TextSearch(tsStub);
 
-    // Assert
+    // 検証
     expect(ts.SupportedLanguageSchema.expects).toBe('("eng" | "jpn")');
   });
 
   test("データの形式を示すプロパティーが欠損しているオブジェクトを渡したとき、入力検証エラーが投げられる", ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     // @ts-expect-error
     const invalidExternalSearch: ITextSearch = {
       textConfig: "simple",
@@ -144,14 +144,14 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act & Assert
+    // 実行と検証
     expect(() => new TextSearch(invalidExternalSearch)).toThrow(InvalidInputError);
   });
 
   test("サポート対象に含まれていない言語を既定の言語として指定したとき、未サポート言語のエラーが投げられる", ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const invalidExternalSearch: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -160,14 +160,14 @@ describe("コンストラクターの初期化と検証", () => {
       isOpen: false,
     };
 
-    // Act & Assert
+    // 実行と検証
     expect(() => new TextSearch(invalidExternalSearch)).toThrow(UnsupportedLanguageError);
   });
 });
 
 describe("検索エンジンの接続状態とライフサイクル管理", () => {
   test("内部の接続状態が有効なとき、状態の取得要求に対して真を返す", ({ expect }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -177,15 +177,15 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const actualState = ts.isOpen;
 
-    // Assert
+    // 検証
     expect(actualState).toBe(true);
   });
 
   test("内部の接続状態が無効なとき、状態の取得要求に対して偽を返す", ({ expect }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -195,10 +195,10 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const actualState = ts.isOpen;
 
-    // Assert
+    // 検証
     expect(actualState).toBe(false);
   });
 
@@ -206,7 +206,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const openFn = vi.fn<() => void>();
     const tsStub: ITextSearch = {
       format: "text",
@@ -218,10 +218,10 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     await ts.open(signal);
 
-    // Assert
+    // 検証
     expect(openFn.mock.calls).toStrictEqual([[{ signal }]]);
   });
 
@@ -229,7 +229,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -239,7 +239,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.open(signal)).resolves.toBeUndefined();
   });
 
@@ -247,7 +247,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const closeFn = vi.fn<() => void>();
     const tsStub: ITextSearch = {
       format: "text",
@@ -259,10 +259,10 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     await ts.close(signal);
 
-    // Assert
+    // 検証
     expect(closeFn.mock.calls).toStrictEqual([[{ signal }]]);
   });
 
@@ -270,7 +270,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -280,7 +280,7 @@ describe("検索エンジンの接続状態とライフサイクル管理", () =
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.close(signal)).resolves.toBeUndefined();
   });
 });
@@ -290,7 +290,7 @@ describe("テキストの単語分割処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -300,10 +300,10 @@ describe("テキストの単語分割処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.tokenize(signal, "eng", "hello       world" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("hello world");
   });
 
@@ -311,7 +311,7 @@ describe("テキストの単語分割処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -324,10 +324,10 @@ describe("テキストの単語分割処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.tokenize(signal, "eng", "" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("a b");
   });
 
@@ -335,7 +335,7 @@ describe("テキストの単語分割処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "english",
@@ -345,7 +345,7 @@ describe("テキストの単語分割処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.tokenize(signal, "eng", "" as Utf8)).rejects.toThrow(UnreachableError);
   });
 
@@ -353,7 +353,7 @@ describe("テキストの単語分割処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -363,7 +363,7 @@ describe("テキストの単語分割処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.tokenize(signal, "fra", "" as Utf8)).rejects.toThrow(UnreachableError);
   });
 
@@ -371,7 +371,7 @@ describe("テキストの単語分割処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -384,7 +384,7 @@ describe("テキストの単語分割処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.tokenize(signal, "eng", "" as Utf8)).rejects.toThrow(InvalidOutputError);
   });
 });
@@ -394,7 +394,7 @@ describe("テキストの標準化処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -404,10 +404,10 @@ describe("テキストの標準化処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.normalize(signal, "eng", "Raw Text" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("Raw Text");
   });
 
@@ -415,7 +415,7 @@ describe("テキストの標準化処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -428,10 +428,10 @@ describe("テキストの標準化処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.normalize(signal, "eng", "ABC" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("abc");
   });
 
@@ -439,7 +439,7 @@ describe("テキストの標準化処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -452,7 +452,7 @@ describe("テキストの標準化処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.normalize(signal, "fur", "" as Utf8)).rejects.toThrow(UnreachableError);
   });
 });
@@ -462,7 +462,7 @@ describe("言語の自動判別処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -472,10 +472,10 @@ describe("言語の自動判別処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.detectLanguage(signal, "text" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("eng");
   });
 
@@ -483,7 +483,7 @@ describe("言語の自動判別処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -496,10 +496,10 @@ describe("言語の自動判別処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act
+    // 実行
     const result = await ts.detectLanguage(signal, "日本語" as Utf8);
 
-    // Assert
+    // 検証
     expect(result).toBe("jpn");
   });
 
@@ -507,7 +507,7 @@ describe("言語の自動判別処理", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const tsStub: ITextSearch = {
       format: "text",
       textConfig: "simple",
@@ -520,7 +520,7 @@ describe("言語の自動判別処理", () => {
     };
     const ts = new TextSearch(tsStub);
 
-    // Act & Assert
+    // 実行と検証
     await expect(ts.detectLanguage(signal, "texte" as Utf8)).rejects.toThrow(InvalidOutputError);
   });
 });

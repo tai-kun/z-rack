@@ -52,10 +52,30 @@ export {
 
 type BaseSchema = typeof safeParse extends (schema: infer S, ...args: any) => any ? S : never;
 
+/**
+ * {@link parseInput} で使用するエラーコンストラクターの型定義です。
+ */
 export interface ParseInputErrorConstructor {
   new (args: InvalidInputErrorArgs): Error;
 }
 
+/**
+ * 入力値をスキーマで検証し、失敗した場合は入力値検証エラーを投げます。
+ *
+ * @param schema 検証に使用するスキーマです。
+ * @param value 検証対象の値です。
+ * @param Error 使用するエラーコンストラクターです。デフォルトは {@link InvalidInputError} です。
+ * @returns 検証済みの出力値です。
+ *
+ * @example
+ * ```
+ * import { v } from "@z-rack/core";
+ *
+ * const schema = v.pipe(v.string(), v.minLength(1));
+ * v.parseInput(schema, "hello"); // => "hello"
+ * v.parseInput(schema, "");      // => InvalidInputError
+ * ```
+ */
 export function parseInput<const TSchema extends BaseSchema>(
   schema: TSchema,
   value: unknown,
@@ -74,10 +94,30 @@ export function parseInput<const TSchema extends BaseSchema>(
   throw error;
 }
 
+/**
+ * `parseOutput` で使用するエラーコンストラクターの型定義です。
+ */
 export interface ParseOutputErrorConstructor {
   new (args: InvalidOutputErrorArgs): Error;
 }
 
+/**
+ * 出力値をスキーマで検証し、失敗した場合は出力値検証エラーを投げます。
+ *
+ * @param schema 検証に使用するスキーマです。
+ * @param value 検証対象の値です。
+ * @param Error 使用するエラーコンストラクターです。デフォルトは {@link InvalidOutputError} です。
+ * @returns 検証済みの出力値です。
+ *
+ * @example
+ * ```
+ * import { v } from "@z-rack/core";
+ *
+ * const schema = v.pipe(v.string(), v.minLength(1));
+ * v.parseOutput(schema, "hello"); // => "hello"
+ * v.parseOutput(schema, "");      // => InvalidOutputError
+ * ```
+ */
 export function parseOutput<const TSchema extends BaseSchema>(
   schema: TSchema,
   value: unknown,
@@ -96,6 +136,23 @@ export function parseOutput<const TSchema extends BaseSchema>(
   throw error;
 }
 
+/**
+ * 値をスキーマで検証し、失敗した場合は予期しないエラーとして扱います。
+ *
+ * {@link parseInput} とは異なり、値の信頼性を前提とした内部バリデーションに適しています。
+ *
+ * @param schema 検証に使用するスキーマです。
+ * @param input 検証対象の値です。
+ * @returns 検証済みの出力値です。
+ *
+ * @example
+ * ```
+ * import { v } from "@z-rack/core";
+ *
+ * const schema = v.pipe(v.string(), v.minLength(1));
+ * v.expect(schema, "hello"); // => "hello"
+ * ```
+ */
 export function expect<const TSchema extends BaseSchema>(
   schema: TSchema,
   input: unknown,

@@ -30,6 +30,19 @@ export interface IdleTask {
 
 /**
  * ブラウザーやランタイムのアイドル時間を利用してタスクを順次実行するキュークラスです。
+ *
+ * @example
+ * ```
+ * import IdleTaskQueue from "@z-rack/core/idle-task-queue";
+ *
+ * const queue = new IdleTaskQueue();
+ *
+ * queue.add(async (signal) => {
+ *   await someHeavyWork(signal);
+ * });
+ *
+ * await queue.wait();
+ * ```
  */
 export default class IdleTaskQueue {
   /**

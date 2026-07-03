@@ -30,13 +30,13 @@ describe("IDatabaseClient の接続管理", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
 
-    // Act
+    // 実行
     await db.open!({ signal });
 
-    // Assert
+    // 検証
     expect(db.isOpen).toBe(true);
 
     // Cleanup
@@ -47,12 +47,12 @@ describe("IDatabaseClient の接続管理", () => {
     expect,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     const ac = new AbortController();
     ac.abort();
 
-    // Act & Assert
+    // 実行と検証
     await expect(db.open!({ signal: ac.signal })).rejects.toThrow(/aborted/);
     expect(db.isOpen).toBe(false);
   });
@@ -62,15 +62,69 @@ describe("IDatabaseClient の接続管理", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act
+    // 実行
     await db.close!({ signal });
 
-    // Assert
+    // 検証
     expect(db.isOpen).toBe(false);
+  });
+
+  test("接続済みの状態で open を再呼び出ししても isOpen が true のままである", async ({
+    expect,
+    signal,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal });
+
+    // 実行
+    await db.open!({ signal });
+
+    // 検証
+    expect(db.isOpen).toBe(true);
+
+    // Cleanup
+    await db.close!({ signal });
+  });
+
+  test("未接続の状態で close を呼び出すとエラーを投げる", async ({ expect, signal, worker }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+
+    // 実行と検証
+    await expect(db.close!({ signal })).rejects.toThrow();
+  });
+
+  test("flush を呼び出すとデータが同期され、isOpen は true のままである", async ({
+    expect,
+    signal,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal });
+
+    // 実行
+    await db.flush!({ signal });
+
+    // 検証
+    expect(db.isOpen).toBe(true);
+
+    // Cleanup
+    await db.close!({ signal });
+  });
+
+  test("未接続の状態で flush を呼び出すとエラーを投げる", async ({ expect, signal, worker }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+
+    // 実行と検証
+    await expect(db.flush!({ signal })).rejects.toThrow();
   });
 });
 
@@ -80,11 +134,11 @@ describe("IDatabaseClient のクエリー実行", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act
+    // 実行
     const iterable = await db.query({
       queryText: "SELECT $1 AS id, $2 AS name",
       bindings: [1, "Alice"],
@@ -92,7 +146,7 @@ describe("IDatabaseClient のクエリー実行", () => {
     });
     const result = await Array.fromAsync(iterable);
 
-    // Assert
+    // 検証
     expect(result).toHaveLength(1);
     expect(result[0]!["id"]).toBe("1");
     expect(result[0]!["name"]).toBe("Alice");
@@ -106,10 +160,10 @@ describe("IDatabaseClient のクエリー実行", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
 
-    // Act & Assert
+    // 実行と検証
     await expect(
       db.query({
         queryText: "SELECT 1",
@@ -117,6 +171,94 @@ describe("IDatabaseClient のクエリー実行", () => {
         signal,
       }),
     ).rejects.toThrow();
+  });
+
+  test("中断されたシグナルでクエリーを実行したとき、AbortError を投げる", async ({
+    expect,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal: AbortSignal.timeout(10_000) });
+    const ac = new AbortController();
+    ac.abort();
+
+    // 実行と検証
+    await expect(
+      db.query({
+        queryText: "SELECT 1",
+        bindings: [],
+        signal: ac.signal,
+      }),
+    ).rejects.toThrow(/aborted/);
+
+    // Cleanup
+    await db.close!({ signal: AbortSignal.timeout(10_000) });
+  });
+
+  test("複数行を返すクエリーが正しく反復処理できる", async ({ expect, signal, worker }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal });
+
+    // 実行
+    const iterable = await db.query({
+      queryText: "SELECT * FROM (VALUES (1, 'a'), (2, 'b'), (3, 'c')) AS t(id, name)",
+      bindings: [],
+      signal,
+    });
+    const result = await Array.fromAsync(iterable);
+
+    // 検証
+    expect(result).toHaveLength(3);
+    expect(result[0]!["name"]).toBe("a");
+    expect(result[1]!["name"]).toBe("b");
+    expect(result[2]!["name"]).toBe("c");
+
+    // Cleanup
+    await db.close!({ signal });
+  });
+
+  test("DDL と DML の一連の操作が正しく動作する", async ({ expect, signal, worker }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal });
+
+    // 実行: CREATE TABLE → INSERT → SELECT
+    await db.query({
+      queryText: "CREATE TABLE IF NOT EXISTS test_users (id INT, name TEXT)",
+      bindings: [],
+      signal,
+    });
+    await db.query({
+      queryText: "INSERT INTO test_users VALUES ($1, $2)",
+      bindings: [1, "Alice"],
+      signal,
+    });
+    await db.query({
+      queryText: "INSERT INTO test_users VALUES ($1, $2)",
+      bindings: [2, "Bob"],
+      signal,
+    });
+    const iterable = await db.query({
+      queryText: "SELECT * FROM test_users ORDER BY id",
+      bindings: [],
+      signal,
+    });
+    const result = await Array.fromAsync(iterable);
+
+    // 検証
+    expect(result).toHaveLength(2);
+    expect(result[0]!["name"]).toBe("Alice");
+    expect(result[1]!["name"]).toBe("Bob");
+
+    // Cleanup
+    await db.query({
+      queryText: "DROP TABLE IF EXISTS test_users",
+      bindings: [],
+      signal,
+    });
+    await db.close!({ signal });
   });
 });
 
@@ -126,12 +268,12 @@ describe("IDatabaseClient のトランザクション制御", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
     let result: Row[] = [];
 
-    // Act
+    // 実行
     await db.transaction({
       signal,
       callback: async (tx: ITransaction) => {
@@ -145,7 +287,7 @@ describe("IDatabaseClient のトランザクション制御", () => {
       },
     });
 
-    // Assert
+    // 検証
     expect(result).toHaveLength(1);
     expect(result[0]!["val"]).toBe("test");
 
@@ -158,11 +300,11 @@ describe("IDatabaseClient のトランザクション制御", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act & Assert
+    // 実行と検証
     await expect(
       db.transaction({
         signal,
@@ -181,11 +323,11 @@ describe("IDatabaseClient のトランザクション制御", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act
+    // 実行
     await db.transaction({
       signal,
       callback: async (tx: ITransaction) => {
@@ -194,9 +336,89 @@ describe("IDatabaseClient のトランザクション制御", () => {
       },
     });
 
-    // Assert
+    // 検証
     // 状態の不整合がないことを確認（この例では正常終了を期待）
     expect(db.isOpen).toBe(true);
+
+    // Cleanup
+    await db.close!({ signal });
+  });
+
+  test("未接続の状態で transaction を呼び出すとエラーを投げる", async ({
+    expect,
+    signal,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+
+    // 実行と検証
+    await expect(
+      db.transaction({
+        signal,
+        callback: async () => {},
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("中断されたシグナルで transaction を実行したとき、AbortError を投げる", async ({
+    expect,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal: AbortSignal.timeout(10_000) });
+    const ac = new AbortController();
+    ac.abort();
+
+    // 実行と検証
+    await expect(
+      db.transaction({
+        signal: ac.signal,
+        callback: async () => {},
+      }),
+    ).rejects.toThrow(/aborted/);
+
+    // Cleanup
+    await db.close!({ signal: AbortSignal.timeout(10_000) });
+  });
+
+  test("トランザクション内で複数のクエリーを実行したとき、すべての結果が取得できる", async ({
+    expect,
+    signal,
+    worker,
+  }) => {
+    // 準備
+    const db: IDatabaseClient = new Pglite(worker);
+    await db.open!({ signal });
+    const results: Row[] = [];
+
+    // 実行
+    await db.transaction({
+      signal,
+      callback: async (tx: ITransaction) => {
+        const iterable1 = await tx.query({
+          queryText: "SELECT $1 AS a",
+          bindings: [1],
+        });
+        for await (const row of iterable1) {
+          results.push(row);
+        }
+
+        const iterable2 = await tx.query({
+          queryText: "SELECT $1 AS b",
+          bindings: [2],
+        });
+        for await (const row of iterable2) {
+          results.push(row);
+        }
+      },
+    });
+
+    // 検証
+    expect(results).toHaveLength(2);
+    expect(results[0]!["a"]).toBe("1");
+    expect(results[1]!["b"]).toBe("2");
 
     // Cleanup
     await db.close!({ signal });
@@ -209,11 +431,11 @@ describe("IDatabaseClient の異常系・境界値テスト", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act
+    // 実行
     const iterable = await db.query({
       queryText: "SELECT 1 AS num",
       bindings: [],
@@ -221,7 +443,7 @@ describe("IDatabaseClient の異常系・境界値テスト", () => {
     });
     const result = await Array.fromAsync(iterable);
 
-    // Assert
+    // 検証
     expect(result).toHaveLength(1);
     expect(result[0]!["num"]).toBe(1);
 
@@ -234,11 +456,11 @@ describe("IDatabaseClient の異常系・境界値テスト", () => {
     signal,
     worker,
   }) => {
-    // Arrange
+    // 準備
     const db: IDatabaseClient = new Pglite(worker);
     await db.open!({ signal });
 
-    // Act & Assert
+    // 実行と検証
     await expect(
       db.query({
         queryText: "INVALID SQL STATEMENT",

@@ -6,7 +6,7 @@ import DatabaseClient from "../src/_database-client.js";
 
 describe("isOpen", () => {
   test("インターフェースの isOpen が真のとき、isOpen を呼び出すと true になる", ({ expect }) => {
-    // Arrange
+    // 準備
     const mockDb: IDatabaseClient = {
       isOpen: 1 as any,
       query() {
@@ -16,15 +16,15 @@ describe("isOpen", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act
+    // 実行
     const result = client.isOpen;
 
-    // Assert
+    // 検証
     expect(result).toBe(true);
   });
 
   test("インターフェースの isOpen が偽のとき、isOpen を呼び出すと false になる", ({ expect }) => {
-    // Arrange
+    // 準備
     const mockDb: IDatabaseClient = {
       isOpen: 0 as any,
       query() {
@@ -34,10 +34,10 @@ describe("isOpen", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act
+    // 実行
     const result = client.isOpen;
 
-    // Assert
+    // 検証
     expect(result).toBe(false);
   });
 });
@@ -47,7 +47,7 @@ describe("open", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const openFn = vi.fn<() => void>();
     const mockDb: IDatabaseClient = {
       isOpen: false,
@@ -59,7 +59,7 @@ describe("open", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act & Assert
+    // 実行と検証
     await expect(client.open(signal)).resolves.toBe(undefined);
     expect(openFn.mock.calls).toStrictEqual([[{ signal }]]);
   });
@@ -68,7 +68,7 @@ describe("open", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const mockDb: IDatabaseClient = {
       isOpen: false,
       query() {
@@ -78,7 +78,7 @@ describe("open", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act & Assert
+    // 実行と検証
     await expect(client.open(signal)).resolves.toBe(undefined);
   });
 });
@@ -88,7 +88,7 @@ describe("close, requestFlush", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const { promise: flushPromise, resolve: resolveFlush } = Promise.withResolvers<void>();
     const closeFn = vi.fn<() => void>();
     const flushFn = vi
@@ -106,14 +106,14 @@ describe("close, requestFlush", () => {
     const client = new DatabaseClient(mockDb);
     const reason = new Error("中断の理由");
 
-    // Act
+    // 実行
     client.requestFlush(); // タスクをキューに追加
     const [flushArgs] = await vi.waitUntil(() => flushFn.mock.calls[0]); // タスク内で flush が呼ばれる
     const closePromise = client.close(signal, reason); // 切断する
     await vi.waitUntil(() => flushArgs.signal.aborted); // タスクが中断される
     resolveFlush(); // タスクを終了する
 
-    // Assert
+    // 検証
     await expect(closePromise).resolves.toBe(undefined);
     expect(flushFn.mock.calls).toStrictEqual([[{ signal: expect.any(AbortSignal) }]]);
     expect(flushFn.mock.calls[0]![0].signal.reason).toBe(reason);
@@ -124,7 +124,7 @@ describe("close, requestFlush", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const closeFn = vi.fn<() => void>();
     const flushFn = vi.fn<() => void>();
     const mockDb: IDatabaseClient = {
@@ -138,11 +138,11 @@ describe("close, requestFlush", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act
+    // 実行
     client.requestFlush(); // タスクをキューに追加
     await client.close(signal, "中断の理由"); // 切断する
 
-    // Assert
+    // 検証
     expect(flushFn.mock.calls).toStrictEqual([[{ signal: expect.any(AbortSignal) }]]);
     expect(closeFn.mock.calls).toStrictEqual([[{ signal }]]);
   });
@@ -151,7 +151,7 @@ describe("close, requestFlush", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const mockDb: IDatabaseClient = {
       isOpen: false,
       query() {
@@ -161,7 +161,7 @@ describe("close, requestFlush", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act & Assert
+    // 実行と検証
     await expect(client.close(signal, "中断の理由")).resolves.toBe(undefined);
   });
 });
@@ -171,7 +171,7 @@ describe("query", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const queryFn = vi.fn<() => Row[]>().mockReturnValue([{ id: 1, name: "tai-kun" }]);
     const mockDb: IDatabaseClient = {
       isOpen: true,
@@ -181,10 +181,10 @@ describe("query", () => {
     const client = new DatabaseClient(mockDb);
     const sqlString = "SELECT * FROM user";
 
-    // Act
+    // 実行
     const result = await client.query(signal, sqlString).collect();
 
-    // Assert
+    // 検証
     expect(queryFn.mock.calls).toStrictEqual([
       [
         {
@@ -201,7 +201,7 @@ describe("query", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const queryFn = vi.fn<() => Row[]>().mockReturnValue([{ id: 1, name: "tai-kun" }]);
     const mockDb: IDatabaseClient = {
       isOpen: true,
@@ -211,10 +211,10 @@ describe("query", () => {
     const client = new DatabaseClient(mockDb);
     const sqlObject = sql`SELECT * FROM user WHERE id = ${1}`;
 
-    // Act
+    // 実行
     const result = await client.query(signal, sqlObject).collect();
 
-    // Assert
+    // 検証
     expect(queryFn.mock.calls).toStrictEqual([
       [
         {
@@ -231,7 +231,7 @@ describe("query", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     let iterated = false;
     const queryFn = vi.fn<() => Generator<Row>>().mockReturnValue(
       (function* () {
@@ -248,10 +248,10 @@ describe("query", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act
+    // 実行
     const result = await client.query(signal, "");
 
-    // Assert
+    // 検証
     expect(result).toBe(undefined);
     expect(iterated).toBe(true);
   });
@@ -259,7 +259,7 @@ describe("query", () => {
 
 describe("transaction", () => {
   test("正常終了時、コールバック関数の返り値を取得できる", async ({ expect, signal }) => {
-    // Arrange
+    // 準備
     const mockTx = {
       query() {
         return [];
@@ -277,12 +277,12 @@ describe("transaction", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act
+    // 実行
     const result = await client.transaction(signal, async () => {
       return "success";
     });
 
-    // Assert
+    // 検証
     expect(result).toBe("success");
   });
 
@@ -290,7 +290,7 @@ describe("transaction", () => {
     expect,
     signal,
   }) => {
-    // Arrange
+    // 準備
     const error = new Error("トランザクション内エラー");
     const mockTx = {
       query() {
@@ -309,7 +309,7 @@ describe("transaction", () => {
     };
     const client = new DatabaseClient(mockDb);
 
-    // Act & Assert
+    // 実行と検証
     await expect(
       client.transaction(signal, async () => {
         throw error;

@@ -4,18 +4,18 @@ import { sql } from "pgsql-template-tag";
 /**
  * データベースクエリーの結果を表すインターフェースです。
  *
- * `Promise<void>` を継承しており、結果を待機するか、反復処理や全件取得を行うことができます。
+ * `Promise<void>` を継承し、結果の待機、反復処理、全件取得の 3 通りの利用方法を提供します。
  */
 export interface QueryResult extends Promise<void> {
   /**
-   * クエリーの結果を非同期ジェネレーターとして反復処理するためのメソッドです。
+   * クエリー結果を非同期ジェネレーターとして反復します。
    *
    * @returns 非同期ジェネレーターを解決する Promise です。
    */
   iter(): Promise<AsyncGenerator<Row, void, unknown>>;
 
   /**
-   * クエリーの結果をすべての行の配列として取得するためのメソッドです。
+   * クエリー結果の全行を配列として取得します。
    *
    * @returns 取得した行の配列を解決する Promise です。
    */
@@ -23,10 +23,10 @@ export interface QueryResult extends Promise<void> {
 }
 
 /**
- * 渡された Promise オブジェクトを `QueryResult` インターフェースに準拠した Promise オブジェクトに変換します。
+ * Promise を `QueryResult` インターフェースに準拠するよう拡張します。
  *
- * @param promise 変換対象となる `AsyncIterable<Row>` または `Iterable<Row>` を内包する Promise です。
- * @returns `QueryResult` の仕様を満たすように拡張された Promise オブジェクトです。
+ * @param promise 変換対象の `AsyncIterable<Row>` または `Iterable<Row>` を内包する Promise です。
+ * @returns `QueryResult` 仕様を満たすよう拡張された Promise です。
  */
 function toQueryResult(promise: Promise<AsyncIterable<Row> | Iterable<Row>>): QueryResult {
   // @ts-expect-error
@@ -34,29 +34,15 @@ function toQueryResult(promise: Promise<AsyncIterable<Row> | Iterable<Row>>): Qu
     get(target, p, receiver) {
       switch (p) {
         case "then":
-          /**
-           * Promise の `then` メソッドをオーバーライドします。
-           *
-           * クエリー の結果を最後まで消費して処理の完了を保証します。
-           *
-           * @param onfulfilled 成功時に呼び出されるコールバック関数です。
-           * @param onrejected 失敗時に呼び出されるコールバック関数です。
-           * @returns 新しい Promise オブジェクトです。
-           */
           return function then(...args: any) {
             return Promise.try(async () => {
               for await (const _ of await promise) {
-                // 空のループで結果をすべて読み飛ばします。
+                // 空ループで結果を全て読み飛ばします。
               }
             }).then(...args);
           };
 
         case "iter":
-          /**
-           * クエリー結果を非同期ジェネレーターとして取得します。
-           *
-           * @returns 非同期ジェネレーターを解決する Promise です。
-           */
           return async function iter() {
             const iter = await promise;
 
@@ -66,11 +52,6 @@ function toQueryResult(promise: Promise<AsyncIterable<Row> | Iterable<Row>>): Qu
           };
 
         case "collect":
-          /**
-           * クエリー結果の全行を配列として収集します。
-           *
-           * @returns 取得した行の配列を解決する Promise です。
-           */
           return async function collect() {
             const iter = await promise;
 
@@ -85,25 +66,16 @@ function toQueryResult(promise: Promise<AsyncIterable<Row> | Iterable<Row>>): Qu
 }
 
 /**
- * データベースのトランザクションを表すクラスです。
+ * データベーストランザクションをラップするクラスです。
  */
 class Transaction {
-  /**
-   * 内部で保持するトランザクションインターフェースです。
-   */
   private readonly tx: ITransaction;
 
   /**
-   * トランザクションの生存期間やキャンセルを制御する中断シグナルです。
+   * トランザクションのキャンセルを制御する中断シグナルです。
    */
   public readonly signal: AbortSignal;
 
-  /**
-   * `Transaction` クラスの新しいインスタンスを作成します。
-   *
-   * @param tx トランザクションインターフェースです。
-   * @param signal 中断シグナルです。
-   */
   public constructor(tx: ITransaction, signal: AbortSignal) {
     this.tx = tx;
     this.signal = signal;
@@ -113,7 +85,7 @@ class Transaction {
    * トランザクション内でクエリーを実行します。
    *
    * @param sql 実行する SQL 文字列またはオブジェクトです。
-   * @returns クエリーの実行結果を含む `QueryResult` です。
+   * @returns クエリー結果を含む `QueryResult` です。
    */
   public query(sql: sql.Sql | string): QueryResult {
     let queryText: string;
@@ -135,9 +107,9 @@ class Transaction {
   }
 
   /**
-   * 現在のトランザクションをロールバックします。
+   * トランザクションをロールバックします。
    *
-   * @returns ロールバック操作の完了を待機する Promise です。
+   * @returns ロールバック完了を待機する Promise です。
    */
   public async rollback(): Promise<void> {
     await this.tx.rollback({});
@@ -147,43 +119,32 @@ class Transaction {
 export type { Transaction };
 
 /**
- * データベースとの接続を管理するメインのクライアントクラスです。
+ * データベース接続を管理するクライアントです。
  */
 export default class DatabaseClient {
-  /**
-   * 内部で保持するデータベースクライアントインターフェースです。
-   */
   private readonly db: IDatabaseClient;
 
-  /**
-   * バックグラウンドで実行されるタスクを管理するアイドルタスクキューです。
-   */
   private readonly bg: IdleTaskQueue;
 
-  /**
-   * `DatabaseClient` クラスの新しいインスタンスを作成します。
-   *
-   * @param db データベースクライアントインターフェースです。
-   */
   public constructor(db: IDatabaseClient) {
     this.db = db;
     this.bg = new IdleTaskQueue();
   }
 
   /**
-   * データベース の接続が開いているかどうかを取得します。
+   * データベースの接続が開いているかどうかを取得します。
    *
-   * @returns 接続が開いている場合は `true`、それ以外の場合は `false` です。
+   * @returns 開いている場合は `true`、それ以外は `false` です。
    */
   public get isOpen(): boolean {
     return Boolean(this.db.isOpen);
   }
 
   /**
-   * バッファーされているデータを永続化します。
+   * バッファーされたデータを永続化します。
    *
-   * @param signal 処理をキャンセルするための中断シグナルです。
-   * @returns 永続化処理の完了を待機する Promise です。
+   * @param signal 処理を中断するためのシグナルです。
+   * @returns 永続化完了を待機する Promise です。
    */
   private async flush(signal: AbortSignal): Promise<void> {
     if (typeof this.db.flush !== "function") {
@@ -194,10 +155,10 @@ export default class DatabaseClient {
   }
 
   /**
-   * データベースへの接続を開きます。
+   * データベース接続を開きます。
    *
-   * @param signal 処理をキャンセルするための中断シグナルです。
-   * @returns 接続が完了するのを待機する Promise です。
+   * @param signal 処理を中断するためのシグナルです。
+   * @returns 接続完了を待機する Promise です。
    */
   public async open(signal: AbortSignal): Promise<void> {
     if (typeof this.db.open !== "function") {
@@ -208,26 +169,26 @@ export default class DatabaseClient {
   }
 
   /**
-   * データベースへの接続を閉じます。
+   * データベース接続を閉じます。
    *
-   * バックグラウンドタスクの状態に応じて、適切にタスクを破棄または待機した後に、クリーンアップを行います。
+   * バックグラウンドタスクの状態に応じてタスクを破棄または待機した後にクリーンアップします。
    *
-   * @param signal 処理をキャンセルするための中断シグナルです。
-   * @param reason 接続を閉じる原因となった エラー などの理由情報です。
-   * @returns 接続が完全に閉じるのを待機する Promise です。
+   * @param signal 処理を中断するためのシグナルです。
+   * @param reason 閉じる原因となったエラーなどの理由です。
+   * @returns 切断完了を待機する Promise です。
    */
   public async close(signal: AbortSignal, reason: unknown): Promise<void> {
     if (this.bg.isEmpty) {
-      // キューが空の場合は、現在実行中のタスクを中断し、その完了を待ちます。
+      // 実行中のタスクを中断し完了を待ちます。
       this.bg.abort(reason);
       await this.bg.wait();
     } else {
-      // キューに残っている未実行のタスクがある場合は、キューをクリアした上で現在実行中のタスクに対して中断を要求します。
+      // 未実行タスクをクリアした上で実行中のタスクに中断を要求します。
       this.bg.clear();
       this.bg.abort(reason);
       await this.bg.wait();
 
-      // 残留データを物理データベースへ書き出すためにフラッシュを実行します。
+      // 残留データを物理データベースへ書き出します。
       await this.flush(signal);
     }
 
@@ -239,11 +200,11 @@ export default class DatabaseClient {
   }
 
   /**
-   * データベースに対してクエリーを実行します。
+   * データベースにクエリーを実行します。
    *
-   * @param signal 処理をキャンセルするための中断シグナルです。
+   * @param signal 処理を中断するためのシグナルです。
    * @param sql 実行する SQL 文字列またはオブジェクトです。
-   * @returns クエリーの実行結果を含む `QueryResult` です。
+   * @returns クエリー結果を含む `QueryResult` です。
    */
   public query(signal: AbortSignal, sql: sql.Sql | string): QueryResult {
     let queryText: string;
@@ -265,12 +226,12 @@ export default class DatabaseClient {
   }
 
   /**
-   * データベースのトランザクションを開始し、指定されたコールバック関数を実行します。
+   * トランザクションを開始し、コールバック内でクエリーを実行します。
    *
-   * @template T コールバック関数が返す戻り値の型です。
-   * @param signal 処理をキャンセルするための中断シグナルです。
-   * @param callback トランザクション内で実行される非同期コールバック関数です。
-   * @returns コールバック関数の実行結果を返す Promise です。
+   * @template T コールバックの戻り値の型です。
+   * @param signal 処理を中断するためのシグナルです。
+   * @param callback トランザクション内で実行される非同期コールバックです。
+   * @returns コールバックの実行結果です。
    */
   public async transaction<T>(
     signal: AbortSignal,
@@ -288,7 +249,7 @@ export default class DatabaseClient {
   }
 
   /**
-   * データを永続化するための フラッシュ 処理を、バックグラウンドのアイドルタスクキューに要求します。
+   * データ永続化のフラッシュ処理をバックグラウンドタスクキューに要求します。
    */
   public requestFlush(): void {
     this.bg.add(async (signal) => {

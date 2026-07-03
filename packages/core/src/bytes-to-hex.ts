@@ -3,6 +3,14 @@
  *
  * @param bytes 変換対象の Uint8Array インスタンスです。
  * @returns 16 進数に変換された文字列です。
+ *
+ * @example
+ * ```
+ * import bytesToHex from "@z-rack/core/bytes-to-hex";
+ *
+ * bytesToHex(new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]));
+ * // => "48656c6c6f"
+ * ```
  */
 let bytesToHex: (bytes: Uint8Array) => string;
 

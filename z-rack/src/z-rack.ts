@@ -76,10 +76,10 @@ const GB = 1000 * MB;
 const MAX_CHUNK_SIZE = 4 * GB;
 
 /**
- * 選択用オブジェクトの指定に基づき、行データから必要なプロパティーを抽出した型を構築します。
+ * select オブジェクトに基づいて行データからプロパティーを抽出する型です。
  *
- * @template TRow 元となる行データの型です。
- * @template TSelect 抽出する項目を判定するための選択用オブジェクトの型です。
+ * @template TRow 元の行データの型です。
+ * @template TSelect 抽出条件の型です。
  */
 export type $Select<
   TRow extends { readonly [_ in string]: unknown },
@@ -93,20 +93,20 @@ export type $Select<
 };
 
 /**
- * `select` オプションのカラム名を抽出します。
+ * select オプションのカラム名を抽出する型です。
  *
- * @template TSelect 選択用オブジェクト、または真偽値の型です。
+ * @template TSelect select オプションの型です。
  */
 type SelectColumn<
   TSelect extends boolean | undefined | { readonly [_ in string]?: boolean | undefined },
 > = keyof Exclude<TSelect, boolean | undefined>;
 
 /**
- * 選択用オブジェクトの型を正規化し、すべてのプロパティーに対して真偽値が確定したマッピング型に変換します。
+ * select オプションの型を正規化し、全プロパティーに真偽値が確定した型に変換します。
  *
- * @template TSelect 変換前の選択用オブジェクト、または真偽値の型です。
- * @template TColumn `select` オプションの全カラム名です。
- * @template TNotSet 値が未設定だった場合に割り当てる規定の真偽値型です。
+ * @template TSelect 変換前の select 型です。
+ * @template TColumn 全カラム名です。
+ * @template TNotSet 未設定時のデフォルト真偽値です。
  */
 type $NormalizeSelect<
   TSelect extends boolean | undefined | { readonly [_ in string]?: boolean | undefined },
@@ -119,13 +119,7 @@ type $NormalizeSelect<
     : { [P in TColumn]: P extends keyof TSelect ? TSelect[P] : false };
 
 /**
- * 指定された複数のキーに対して、すべて同じ値を割り当てたオブジェクトを作成します。
- *
- * @template TValue 割り当てる値の型です。
- * @template TKey キーを表す文字列のリテラル型です。
- * @param value すべてのキーに設定する共有の値です。
- * @param keys オブジェクトのプロパティー名となるキーの配列です。
- * @returns 構築されたレコードオブジェクトを返します。
+ * 複数のキーに同じ値を割り当てたレコードを作成します。
  */
 const record = <const TValue, const TKey extends string>(value: TValue, keys: readonly TKey[]) =>
   Object.fromEntries(keys.map((key) => [key, value])) as Record<TKey, TValue>;
@@ -202,33 +196,33 @@ export interface SetupFunction {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * リソースを開く際のオプションを検証するスキーマです。
+ * オープンオプションのバリデーションスキーマです。
  */
 const OpenOptionsSchema = v.object({
   signal: v.optional(v.instance(AbortSignal)),
 });
 
 /**
- * リソースを開く際に指定できるオプションの型定義です。
+ * オープン時に指定できるオプションです。
  */
 export type OpenOptions = v.InferInput<typeof OpenOptionsSchema>;
 
 /**
- * リソースを閉じる際のオプションを検証するスキーマです。
+ * クローズオプションのバリデーションスキーマです。
  */
 const CloseOptionsSchema = v.object({
   signal: v.optional(v.instance(AbortSignal)),
 });
 
 /**
- * リソースを閉じる際に指定できるオプションの型定義です。
+ * クローズ時に指定できるオプションです。
  */
 export type CloseOptions = v.InferInput<typeof CloseOptionsSchema>;
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * オブジェクトを保存する際のオプションを検証するスキーマです。
+ * 保存オプションのバリデーションスキーマです。
  */
 const PutObjectOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -247,9 +241,9 @@ const PutObjectOptionsSchema = v.object({
 });
 
 /**
- * オブジェクト保存関数の引数のバリエーションを検証する複合スキーマです。
+ * 保存関数の引数バリエーションのバリデーションスキーマです。
  *
- * 単一のオプションオブジェクトを受け取る形式と、キーやデータを個別の引数として受け取る形式の両方に対応します。
+ * オプションオブジェクト形式と個別引数形式の両方に対応します。
  */
 const PutObjectArgsSchema = v.union([
   v.tuple([PutObjectOptionsSchema]),
@@ -273,96 +267,86 @@ const PutObjectArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクトを保存する際に指定できるオプションの型定義です。
+ * 保存時に指定できるオプションです。
  */
 export type PutObjectOptions = v.InferInput<typeof PutObjectOptionsSchema>;
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * 管理対象となるオブジェクトのメタデータ情報を表す型定義です。
+ * オブジェクトのメタデータを表す型です。
  */
 export type ObjectMetadata = {
   /**
-   * オブジェクトを一意に識別する識別子です。
+   * オブジェクトを一意に識別する ID です。
    */
   id: string;
 
   /**
-   * レコードの処理種別を示す識別子です。新規作成かメタデータの更新かを表します。
+   * レコードの処理種別です（新規作成またはメタデータ更新）。
    */
   recordType: "CREATE" | "UPDATE_METADATA";
 
   /**
-   * レコードが記録された日時を示すタイムスタンプです。
+   * レコードが記録されたタイムスタンプです。
    */
   recordTimestamp: number;
 
   /**
-   * オブジェクトの格納パスや名前を表すキーです。
+   * オブジェクトのキー（パス）です。
    */
   key: ObjectKey;
 
   /**
-   * データのサイズをバイト単位で表した数値です。
+   * データサイズ（バイト）です。
    */
   size: number;
 
   /**
-   * データの形式を示すメディアタイプ情報です。
+   * MIME タイプです。
    */
   mimeType: MimeTypeLike;
 
   /**
-   * データの同一性を検証するためのエンティティータグ文字列です。
+   * エンティティータグです。
    */
   eTag: string;
 
   /**
-   * オブジェクトが最初に作成された日時を示すタイムスタンプです。
+   * 作成日時です。
    */
   createdAt: number;
 
   /**
-   * オブジェクトが最後に変更された日時を示すタイムスタンプです。
+   * 最終更新日時です。
    */
   lastModifiedAt: number;
 
   /**
-   * 記述されているテキストの言語情報です。
+   * 説明文の言語です。
    */
   language: LanguageLike;
 
   /**
-   * オブジェクトに関する詳細な説明文です。設定されていない場合はヌル（ null ）となります。
+   * 説明文です（未設定時は null）。
    */
   description: string | null;
 
   /**
-   * オブジェクトに付与されている分類用のタグ一覧です。
+   * タグ一覧です。
    */
   tags: string[];
 
   /**
-   * 利用者が任意に設定できる拡張メタデータ情報です。
+   * ユーザー定義のメタデータです。
    */
   userMetadata: unknown;
 };
 
 // -------------------------------------------------------------------------------------------------
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 const GET_OBJECT_SELECT_NOT_SET = false as const;
 
-/**
- * オブジェクト取得時における、抽出対象メタデータ項目の一覧レコードを作成します。
- *
- * @template TValue 設定する真偽値の型です。
- * @param value 選択状態を示す真偽値です。
- * @returns 指定されたキーに対して真偽値をマッピングしたレコードを返します。
- */
 const GetObjectSelectRecord = <const TValue>(value: TValue) =>
   record(value, [
     "id",
@@ -377,7 +361,7 @@ const GetObjectSelectRecord = <const TValue>(value: TValue) =>
   ]);
 
 /**
- * オブジェクトデータをファイルとして取得する際のオプションを検証するスキーマです。
+ * 取得オプションのバリデーションスキーマです。
  */
 const GetObjectOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -395,7 +379,7 @@ const GetObjectOptionsSchema = v.object({
 });
 
 /**
- * オブジェクト取得関数の引数のバリエーションを検証する複合スキーマです。
+ * 取得関数の引数バリエーションのバリデーションスキーマです。
  */
 const GetObjectArgsSchema = v.union([
   v.tuple([GetObjectOptionsSchema]),
@@ -412,39 +396,30 @@ const GetObjectArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクト取得時に指定する、返却メタデータ選択項目の型定義です。
+ * 取得時の select オプションの型です。
  */
 export type GetObjectSelect = v.InferInput<typeof GetObjectOptionsSchema>["select"];
 
 /**
- * オブジェクトデータを取得する際に指定できるオプションの型定義です。
+ * 取得時に指定できるオプションです。
  *
- * @template TSelect 取得対象として選択するメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type GetObjectOptions<TSelect extends GetObjectSelect = GetObjectSelect> = Omit<
   v.InferInput<typeof GetObjectOptionsSchema>,
   "select"
 > & {
-  /**
-   * レスポンスに含めるメタデータの項目を指定します。
-   */
   readonly select?: TSelect;
 };
 
-/**
- * 選択可能なカラムです。
- */
 type GetObjectSelectColumn = SelectColumn<GetObjectSelect>;
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 type GetObjectSelectNotSet = typeof GET_OBJECT_SELECT_NOT_SET;
 
 /**
- * 取得されたオブジェクトのファイルデータと、選択されたメタデータを統合した返却型定義です。
+ * オブジェクトのファイルデータと選択されたメタデータを統合した型です。
  *
- * @template TSelect 抽出対象として指定されたメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type ObjectFile<TSelect extends GetObjectSelect = GetObjectSelect> = File &
   $Select<ObjectMetadata, $NormalizeSelect<TSelect, GetObjectSelectColumn, GetObjectSelectNotSet>> &
@@ -452,18 +427,8 @@ export type ObjectFile<TSelect extends GetObjectSelect = GetObjectSelect> = File
 
 // -------------------------------------------------------------------------------------------------
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 const GET_OBJECT_STREAM_SELECT_NOT_SET = false as const;
 
-/**
- * ストリームによるオブジェクト取得時における、抽出対象メタデータ項目の一覧レコードを作成します。
- *
- * @template TValue 設定する真偽値の型です。
- * @param value 選択状態を示す真偽値です。
- * @returns 指定されたキーに対して真偽値をマッピングしたレコードを返します。
- */
 const GetObjectStreamSelectRecord = <const TValue>(value: TValue) =>
   record(value, [
     "id",
@@ -481,7 +446,7 @@ const GetObjectStreamSelectRecord = <const TValue>(value: TValue) =>
   ]);
 
 /**
- * オブジェクトデータをストリームとして取得する際のオプションを検証するスキーマです。
+ * オブジェクトストリーム取得オプションのバリデーションスキーマです。
  */
 const GetObjectStreamOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -499,7 +464,7 @@ const GetObjectStreamOptionsSchema = v.object({
 });
 
 /**
- * ストリーム取得関数の引数のバリエーションを検証する複合スキーマです。
+ * ストリーム取得関数の引数バリエーションのバリデーションスキーマです。
  */
 const GetObjectStreamArgsSchema = v.union([
   v.tuple([GetObjectOptionsSchema]),
@@ -516,37 +481,28 @@ const GetObjectStreamArgsSchema = v.union([
 ]);
 
 /**
- * ストリーム取得時に指定する、返却メタデータ選択項目の型定義です。
+ * ストリーム取得時の select オプションの型です。
  */
 export type GetObjectStreamSelect = v.InferInput<typeof GetObjectStreamOptionsSchema>["select"];
 
 /**
- * オブジェクトデータをストリームとして取得する際に指定できるオプションの型定義です。
+ * ストリーム取得時に指定できるオプションです。
  *
- * @template TSelect 取得対象として選択するメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type GetObjectStreamOptions<TSelect extends GetObjectStreamSelect = GetObjectStreamSelect> =
   Omit<v.InferInput<typeof GetObjectStreamOptionsSchema>, "select"> & {
-    /**
-     * レスポンスに含めるメタデータの項目を指定します。
-     */
     readonly select?: TSelect;
   };
 
-/**
- * 選択可能なカラムです。
- */
 type GetObjectStreamSelectColumn = SelectColumn<GetObjectSelect>;
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 type GetObjectStreamSelectNotSet = typeof GET_OBJECT_STREAM_SELECT_NOT_SET;
 
 /**
- * 取得されたオブジェクトのデータストリームと、選択されたメタデータを統合した返却型定義です。
+ * オブジェクトのデータストリームと選択されたメタデータを統合した型です。
  *
- * @template TSelect 抽出対象として指定されたメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type ObjectStream<TSelect extends GetObjectStreamSelect = GetObjectStreamSelect> =
   ValueStream<Uint8Array<ArrayBuffer>> &
@@ -563,13 +519,6 @@ export type ObjectStream<TSelect extends GetObjectStreamSelect = GetObjectStream
  */
 const LIST_OBJECTS_SELECT_NOT_SET = true as const;
 
-/**
- * オブジェクト一覧を取得する際における、抽出対象メタデータ項目の一覧レコードを作成します。
- *
- * @template TValue 設定する真偽値の型です。
- * @param value 選択状態を示す真偽値です。
- * @returns 指定されたキーに対して真偽値をマッピングしたレコードを返します。
- */
 const ListObjectsSelectRecord = <const TValue>(value: TValue) =>
   record(value, [
     "id",
@@ -588,7 +537,7 @@ const ListObjectsSelectRecord = <const TValue>(value: TValue) =>
   ]);
 
 /**
- * オブジェクトの一覧を検索・取得する際のオプションを検証するスキーマです。
+ * 一覧取得オプションのバリデーションスキーマです。
  */
 const ListObjectsOptionsSchema = v.object({
   prefix: v.optional(ObjectKeyPrefixSchema),
@@ -618,7 +567,7 @@ const ListObjectsOptionsSchema = v.object({
 });
 
 /**
- * オブジェクト一覧取得関数の引数のバリエーションを検証する複合スキーマです。
+ * 一覧取得関数の引数バリエーションのバリデーションスキーマです。
  */
 const ListObjectsArgsSchema = v.union([
   v.tuple([
@@ -647,39 +596,30 @@ const ListObjectsArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクト一覧取得時に指定する、返却メタデータ選択項目の型定義です。
+ * 一覧取得時の select オプションの型です。
  */
 export type ListObjectsSelect = v.InferInput<typeof ListObjectsOptionsSchema>["select"];
 
 /**
- * オブジェクトの一覧を取得する際に指定できるオプションの型定義です。
+ * 一覧取得時に指定できるオプションです。
  *
- * @template TSelect 取得対象として選択するメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type ListObjectsOptions<TSelect extends ListObjectsSelect = ListObjectsSelect> = Omit<
   v.InferInput<typeof ListObjectsOptionsSchema>,
   "select"
 > & {
-  /**
-   * レスポンスに含めるメタデータの項目を指定します。
-   */
   readonly select?: TSelect;
 };
 
-/**
- * 選択可能なカラムです。
- */
 type ListObjectsSelectColumn = SelectColumn<ListObjectsSelect>;
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 type ListObjectsSelectNotSet = typeof LIST_OBJECTS_SELECT_NOT_SET;
 
 /**
- * オブジェクトの一覧を取得した際に返される、各要素のデータおよび指定されたメタデータの型定義です。
+ * 一覧の各要素の型です。
  *
- * @template TSelect 抽出対象として指定されたメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type ObjectMetadataListItem<TSelect extends ListObjectsSelect = ListObjectsSelect> = $Select<
   ObjectMetadata,
@@ -688,18 +628,8 @@ export type ObjectMetadataListItem<TSelect extends ListObjectsSelect = ListObjec
 
 // -------------------------------------------------------------------------------------------------
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 const SEARCH_OBJECTS_SELECT_NOT_SET = true as const;
 
-/**
- * オブジェクト検索時における、抽出対象メタデータ項目の一覧レコードを作成します。
- *
- * @template TValue 設定する真偽値の型です。
- * @param value 選択状態を示す真偽値です。
- * @returns 指定されたキーに対して真偽値をマッピングしたレコードを返します。
- */
 const SearchObjectsSelectRecord = <const TValue>(value: TValue) =>
   record(value, [
     "id",
@@ -718,7 +648,7 @@ const SearchObjectsSelectRecord = <const TValue>(value: TValue) =>
   ]);
 
 /**
- * 条件を指定してオブジェクトを全文検索する際のオプションを検証するスキーマです。
+ * 検索オプションのバリデーションスキーマです。
  */
 const SearchObjectsOptionsSchema = v.object({
   skip: v.optional(UintSchema, 0),
@@ -740,7 +670,7 @@ const SearchObjectsOptionsSchema = v.object({
 });
 
 /**
- * オブジェクト検索関数の引数のバリエーションを検証する複合スキーマです。
+ * 検索関数の引数バリエーションのバリデーションスキーマです。
  */
 const SearchObjectsArgsSchema = v.union([
   v.tuple([SearchObjectsOptionsSchema]),
@@ -761,39 +691,30 @@ const SearchObjectsArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクト検索時に指定する、返却メタデータ選択項目の型定義です。
+ * 検索時の select オプションの型です。
  */
 export type SearchObjectsSelect = v.InferInput<typeof SearchObjectsOptionsSchema>["select"];
 
 /**
- * オブジェクトを検索する際に指定できるオプションの型定義です。
+ * 検索時に指定できるオプションです。
  *
- * @template TSelect 取得対象として選択するメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type SearchObjectsOptions<TSelect extends SearchObjectsSelect = SearchObjectsSelect> = Omit<
   v.InferInput<typeof SearchObjectsOptionsSchema>,
   "select"
 > & {
-  /**
-   * レスポンスに含めるメタデータの項目を指定します。
-   */
   readonly select?: TSelect;
 };
 
-/**
- * 選択可能なカラムです。
- */
 type SearchObjectsSelectColumn = SelectColumn<SearchObjectsSelect>;
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 type SearchObjectsSelectNotSet = typeof SEARCH_OBJECTS_SELECT_NOT_SET;
 
 /**
- * オブジェクトを検索した結果として返される、各合致要素のデータおよびメタデータの型定義です。
+ * 検索結果の各要素の型です。
  *
- * @template TSelect 抽出対象として指定されたメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type ObjectMetadataSearchItem<TSelect extends SearchObjectsSelect = SearchObjectsSelect> = {
   score: number;
@@ -805,7 +726,7 @@ export type ObjectMetadataSearchItem<TSelect extends SearchObjectsSelect = Searc
 // -------------------------------------------------------------------------------------------------
 
 /**
- * オブジェクトを削除する際のオプションを検証するスキーマです。
+ * 削除オプションのバリデーションスキーマです。
  */
 const DeleteObjectOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -814,7 +735,7 @@ const DeleteObjectOptionsSchema = v.object({
 });
 
 /**
- * オブジェクト削除関数の引数のバリエーションを検証する複合スキーマです。
+ * 削除関数の引数バリエーションのバリデーションスキーマです。
  */
 const DeleteObjectArgsSchema = v.union([
   v.tuple([DeleteObjectOptionsSchema]),
@@ -831,14 +752,14 @@ const DeleteObjectArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクトを削除する際に指定できるオプションの型定義です。
+ * 削除時に指定できるオプションです。
  */
 export type DeleteObjectOptions = v.InferInput<typeof DeleteObjectOptionsSchema>;
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * メタデータの存在確認を行う際のオプションを検証するスキーマです。
+ * 存在確認オプションのバリデーションスキーマです。
  */
 const ExistsMetadataOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -846,7 +767,7 @@ const ExistsMetadataOptionsSchema = v.object({
 });
 
 /**
- * メタデータ存在確認関数の引数のバリエーションを検証する複合スキーマです。
+ * 存在確認関数の引数バリエーションのバリデーションスキーマです。
  */
 const ExistsMetadataArgsSchema = v.union([
   v.tuple([ExistsMetadataOptionsSchema]),
@@ -862,24 +783,14 @@ const ExistsMetadataArgsSchema = v.union([
 ]);
 
 /**
- * メタデータの存在確認を行う際に指定できるオプションの型定義です。
+ * 存在確認時に指定できるオプションです。
  */
 export type ExistsMetadataOptions = v.InferInput<typeof ExistsMetadataOptionsSchema>;
 
 // -------------------------------------------------------------------------------------------------
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 const GET_OBJECT_METADATA_SELECT_NOT_SET = true as const;
 
-/**
- * メタデータ単体を取得する際における、抽出対象項目の一覧レコードを作成します。
- *
- * @template TValue 設定する真偽値の型です。
- * @param value 選択状態を示す真偽値です。
- * @returns 指定されたキーに対して真偽値をマッピングしたレコードを返します。
- */
 const GetObjectMetadataSelectRecord = <const TValue>(value: TValue) =>
   record(value, [
     "id",
@@ -898,7 +809,7 @@ const GetObjectMetadataSelectRecord = <const TValue>(value: TValue) =>
   ]);
 
 /**
- * メタデータのみを取得する際のオプションを検証するスキーマです。
+ * メタデータ取得オプションのバリデーションスキーマです。
  */
 const GetObjectMetadataOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -916,7 +827,7 @@ const GetObjectMetadataOptionsSchema = v.object({
 });
 
 /**
- * メタデータ取得関数の引数のバリエーションを検証する複合スキーマです。
+ * メタデータ取得関数の引数バリエーションのバリデーションスキーマです。
  */
 const GetObjectMetadataArgsSchema = v.union([
   v.tuple([GetObjectMetadataOptionsSchema]),
@@ -933,38 +844,29 @@ const GetObjectMetadataArgsSchema = v.union([
 ]);
 
 /**
- * メタデータ取得時に指定する、返却メタデータ選択項目の型定義です。
+ * メタデータ取得時の select オプションの型です。
  */
 export type GetObjectMetadataSelect = v.InferInput<typeof GetObjectMetadataOptionsSchema>["select"];
 
 /**
- * オブジェクトのメタデータのみを取得する際に指定できるオプションの型定義です。
+ * メタデータ取得時に指定できるオプションです。
  *
- * @template TSelect 取得対象として選択するメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type GetObjectMetadataOptions<
   TSelect extends GetObjectMetadataSelect = GetObjectMetadataSelect,
 > = Omit<v.InferInput<typeof GetObjectMetadataOptionsSchema>, "select"> & {
-  /**
-   * レスポンスに含めるメタデータの項目を指定します。
-   */
   readonly select?: TSelect;
 };
 
-/**
- * 選択可能なカラムです。
- */
 type GetObjectMetadataSelectColumn = SelectColumn<GetObjectMetadataSelect>;
 
-/**
- * `select` オプションが無い場合に選択するかどうかです。
- */
 type GetObjectMetadataSelectNotSet = typeof GET_OBJECT_METADATA_SELECT_NOT_SET;
 
 /**
- * 取得要求に基づいて、指定された項目のみが抽出されたメタデータオブジェクトの型定義です。
+ * 選択されたメタデータのみを含む型です。
  *
- * @template TSelect 抽出対象として指定されたメタデータ項目の型です。
+ * @template TSelect 抽出するメタデータ項目の型です。
  */
 export type SelectedObjectMetadata<
   TSelect extends GetObjectMetadataSelect = GetObjectMetadataSelect,
@@ -976,7 +878,7 @@ export type SelectedObjectMetadata<
 // -------------------------------------------------------------------------------------------------
 
 /**
- * 既存オブジェクトのメタデータを更新する際のオプションを検証するスキーマです。
+ * メタデータ更新オプションのバリデーションスキーマです。
  */
 const UpdateObjectMetadataOptionsSchema = v.object({
   key: ObjectKeySchema,
@@ -990,7 +892,7 @@ const UpdateObjectMetadataOptionsSchema = v.object({
 });
 
 /**
- * メタデータ更新関数の引数のバリエーションを検証する複合スキーマです。
+ * メタデータ更新関数の引数バリエーションのバリデーションスキーマです。
  */
 const UpdateObjectMetadataArgsSchema = v.union([
   v.tuple([UpdateObjectMetadataOptionsSchema]),
@@ -1004,7 +906,7 @@ const UpdateObjectMetadataArgsSchema = v.union([
 ]);
 
 /**
- * オブジェクトのメタデータを更新する際に指定できるオプションの型定義です。
+ * メタデータ更新時に指定できるオプションです。
  */
 export type UpdateObjectMetadataOptions = v.InferInput<typeof UpdateObjectMetadataOptionsSchema>;
 
@@ -1069,34 +971,17 @@ type Connection = {
 };
 
 /**
- * オブジェクトストレージと構造化されたメタデータ管理を統合し、 アプリケーションに対して一貫したオブジェクト操作を提供する管理クラスです。
+ * オブジェクトストレージとメタデータ管理を統合し、一貫したオブジェクト操作を提供するクラスです。
  */
 export default class ZRack implements AsyncDisposable {
-  /**
-   * 現在の有効な接続状態を保持します。非接続時はヌル（ null ）となります。
-   */
   #con: Connection | null;
 
-  /**
-   * 実行中の非同期処理を中断するために作成された、コントローラーの集合です。
-   */
   readonly #acSet: Set<AbortController>;
 
-  /**
-   * 初期化に必要な設定、または動的に設定を取得するための初期化関数です。
-   */
   readonly #setup: SetupFunction | ReturnType<typeof parseSetupParams>;
 
-  /**
-   * バックグラウンドで遅延実行されるタスクを管理する待機キューです。
-   */
   readonly #tasks: IdleTaskQueue;
 
-  /**
-   * インスタンスを新しく構築します。
-   *
-   * @param setup 静的な設定パラメーター、または動的に設定を解決する初期化関数です。
-   */
   public constructor(setup: SetupParams | SetupFunction) {
     this.#con = null;
     this.#acSet = new Set();
@@ -1259,12 +1144,12 @@ export default class ZRack implements AsyncDisposable {
   // -----------------------------------------------------------------------------------------------
 
   /**
-   * 内部の接続を安全に終了させるための非公開メソッドです。
+   * 内部接続を安全に終了します。
    *
-   * 実行中の遅延タスクの完了を待機し、オープンされた各コンポーネントを順番に切断します。
+   * バックグラウンドタスクの完了を待機し、オープンされたコンポーネントを順次切断します。
    *
-   * @param signal クローズ処理の中断を検知するためのシグナルです。
-   * @param con 切断対象とする現在の接続管理オブジェクトです。
+   * @param signal 中断シグナルです。
+   * @param con 切断対象の接続管理オブジェクトです。
    */
   async #close(signal: AbortSignal, con: Connection): Promise<void> {
     const lock = await asyncmux(this, signal);
@@ -1275,7 +1160,7 @@ export default class ZRack implements AsyncDisposable {
 
       const { db, io, ts, close } = this.#con;
 
-      // キューにたまっている未完了のバックグラウンドタスクがすべて消化されるまで待機します。
+      // 未完了のバックグラウンドタスクの完了を待機します。
       try {
         const abortPromise = createAbortPromise(signal);
         await Promise.race([this.#tasks.wait(), abortPromise]);
@@ -1283,7 +1168,7 @@ export default class ZRack implements AsyncDisposable {
         logger.error`ZRack.close: Failed to finalize tasks: ${ex}`;
       }
 
-      // オープン時に自身で接続を開始したコンポーネントのみを明示的にクローズしていきます。
+      // 自身で接続を開始したコンポーネントのみをクローズします。
       if (close.ts) {
         try {
           await ts.close(signal);
@@ -1316,13 +1201,12 @@ export default class ZRack implements AsyncDisposable {
   }
 
   /**
-   * システムの接続を閉じ、確保していた各種リソースを解放します。
+   * システムの接続を閉じ、リソースを解放します。
    *
-   * @param options クローズ処理に指定する追加オプションです。
+   * @param options クローズオプションです（デフォルトタイムアウト 10 秒）。
    */
   public async close(options: CloseOptions = {}): Promise<void> {
     try {
-      // 規定値として 10 秒のタイムアウトを設定し、応答なしによるハングアップを防止します。
       const { signal = AbortSignal.timeout(10e3) } = v.parseInput(CloseOptionsSchema, options);
 
       if (this.#con === null) {
@@ -1337,7 +1221,6 @@ export default class ZRack implements AsyncDisposable {
         throw new ZRackIsNotOpenError();
       }
 
-      // 待機中のキュー処理に対して中断を要求します。
       this.#tasks.abort(new ZRackIsNotOpenError());
 
       const { ac } = this.#con;
@@ -1356,9 +1239,9 @@ export default class ZRack implements AsyncDisposable {
   }
 
   /**
-   * 非同期リソース解放の標準仕様に準拠したクリーンアップを実行します。
+   * `AsyncDisposable` インターフェースに準拠したクリーンアップです。
    *
-   * スコープを抜けた際などに自動的に呼び出されます。
+   * `using` ブロックの終了時に自動的に呼び出されます。
    */
   public async [Symbol.asyncDispose](): Promise<void> {
     try {
@@ -1379,7 +1262,9 @@ export default class ZRack implements AsyncDisposable {
   // -----------------------------------------------------------------------------------------------
 
   /**
-   * データベースなどの内部コンポーネントが要求を受け付けられる準備が整うまで待機します。
+   * 内部コンポーネントの準備が整うまで待機します。
+   *
+   * データベースのバックグラウンドマイグレーション完了を待ちます。
    */
   public get ready(): Promise<void> {
     return Promise.try(async () => {
@@ -1389,7 +1274,6 @@ export default class ZRack implements AsyncDisposable {
 
       const { ac, db } = this.#con;
       const abortPromise = createAbortPromise(ac.signal);
-      // システムの中断通知、またはデータベースの準備完了のどちらか早い方を待機します。
       await Promise.race([abortPromise, db.ready()]);
     });
   }
@@ -1421,7 +1305,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<void>;
 
   /**
-   * オブジェクトの永続化を実行する実体メソッドです。可変長引数を解析して処理します。
+   * オブジェクトの保存・上書きを実行します。
    */
   public async putObject(...args: any): Promise<void> {
     if (this.#con === null) {
@@ -1550,7 +1434,7 @@ export default class ZRack implements AsyncDisposable {
             ex.message.toLowerCase().includes("unique") &&
             ex.message.toLowerCase().includes("_z_rack-unq-private_metadata-_key")
           ) {
-            err = new ObjectExistsError({ key: String(key) }, { cause: ex });
+            err = new ObjectExistsError({ key: String(key), cause: ex });
           } else {
             err = ex;
           }
@@ -1597,7 +1481,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<ObjectFile<TSelect>>;
 
   /**
-   * オブジェクトをファイルとして取得する実体メソッドです。
+   * オブジェクトをファイルとして取得します。
    */
   public async getObject(...args: any): Promise<ObjectFile> {
     if (this.#con === null) {
@@ -1642,7 +1526,7 @@ export default class ZRack implements AsyncDisposable {
         return Object.assign(file, { key, ...metadata });
       } catch (ex) {
         if (ex instanceof KeyNotFoundError) {
-          throw new ObjectNotFoundError({ key: String(key) }, { cause: ex });
+          throw new ObjectNotFoundError({ key: String(key), cause: ex });
         }
 
         throw ex;
@@ -1685,7 +1569,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<ObjectStream<TSelect>>;
 
   /**
-   * オブジェクトのデータストリームを取得する実体メソッドです。
+   * オブジェクトのデータストリームを取得します。
    */
   public async getObjectStream(...args: any): Promise<ObjectStream> {
     if (this.#con === null) {
@@ -1722,7 +1606,7 @@ export default class ZRack implements AsyncDisposable {
         return Object.assign(stream, { key, ...metadata });
       } catch (ex) {
         if (ex instanceof KeyNotFoundError) {
-          throw new ObjectNotFoundError({ key: String(key) }, { cause: ex });
+          throw new ObjectNotFoundError({ key: String(key), cause: ex });
         }
 
         throw ex;
@@ -1765,7 +1649,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<AsyncGenerator<ObjectMetadataListItem<TSelect>, void, unknown>>;
 
   /**
-   * 条件に合致するオブジェクト一覧をページングを伴って順次走査するための実体メソッドです。
+   * 条件に合致するオブジェクト一覧をページング付きで取得します。
    */
   public async listObjects(
     ...args: any
@@ -1851,7 +1735,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<AsyncGenerator<ObjectMetadataSearchItem<TSelect>, void, unknown>>;
 
   /**
-   * テキスト検索エンジンを活用したオブジェクトの全文検索を実行する実体メソッドです。
+   * 全文検索を実行します。
    */
   public async searchObjects(
     ...args: any
@@ -1941,7 +1825,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<void>;
 
   /**
-   * 対象のオブジェクトデータを安全に破棄するための実体メソッドです。
+   * オブジェクトを削除します。
    */
   public async deleteObject(...args: any): Promise<void> {
     if (this.#con === null) {
@@ -2023,7 +1907,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<SelectedObjectMetadata<TSelect>>;
 
   /**
-   * 実データにアクセスせず、付随する管理属性情報（メタデータ）のみを検索・返却する実体メソッドです。
+   * 実データにアクセスせずメタデータのみを取得します。
    */
   public async getObjectMetadata(...args: any): Promise<SelectedObjectMetadata> {
     if (this.#con === null) {
@@ -2054,7 +1938,7 @@ export default class ZRack implements AsyncDisposable {
         return metadata;
       } catch (ex) {
         if (ex instanceof KeyNotFoundError) {
-          throw new ObjectNotFoundError({ key: String(key) }, { cause: ex });
+          throw new ObjectNotFoundError({ key: String(key), cause: ex });
         }
 
         throw ex;
@@ -2091,7 +1975,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<void>;
 
   /**
-   * 既存メタデータの各パラメーター値をインプレースで更新するための実体メソッドです。
+   * 既存メタデータを更新します。
    */
   public async updateObjectMetadata(...args: any): Promise<void> {
     if (this.#con === null) {
@@ -2191,7 +2075,7 @@ export default class ZRack implements AsyncDisposable {
   ): Promise<boolean>;
 
   /**
-   * オブジェクトメタデータの生存確認を高速に実施する実体メソッドです。
+   * メタデータの存在確認を実行します。
    */
   public async existsMetadata(...args: any): Promise<boolean> {
     if (this.#con === null) {

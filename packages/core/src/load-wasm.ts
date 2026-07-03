@@ -145,6 +145,18 @@ function isWasmModule(x: unknown): x is WebAssembly.Module {
  * @param source WebAssembly のソース（URL 文字列、バイナリー、Response 等）です。
  * @param options インポートやシグナルを制御するオプションです。
  * @returns 型定義された WebAssembly のエクスポートを含む Promise です。
+ *
+ * @example
+ * ```
+ * import loadWasm from "@z-rack/core/load-wasm";
+ *
+ * // URL から読み込む場合
+ * const exports = await loadWasm("https://example.com/module.wasm");
+ *
+ * // バイト配列から読み込む場合
+ * const bytes = new Uint8Array([0x00, 0x61, 0x73, 0x6d, ...]);
+ * const exports2 = await loadWasm(bytes);
+ * ```
  */
 export default async function loadWasm<TExports extends WebAssembly.Exports = WebAssembly.Exports>(
   source: WasmSource,
@@ -183,7 +195,7 @@ export default async function loadWasm<TExports extends WebAssembly.Exports = We
     case isResponse(source):
       // HTTP レスポンスを処理します。
       if (source.status !== 200) {
-        throw new HttpResponseError(source);
+        throw new HttpResponseError({ response: source });
       }
 
       // ストリーミング・コンパイルがサポートされている場合は優先的に使用します。

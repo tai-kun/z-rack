@@ -11,6 +11,7 @@ minimumReleaseAgeExclude:
   - unikvs
   - "@unikvs/*"
   - "@tai-kun/valibot-extra-lab"
+  - i18n-error-base
 onlyBuiltDependencies: []
 strictDepBuilds: false
 blockExoticSubdeps: true

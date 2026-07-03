@@ -4,6 +4,13 @@ import type { MaybePromise } from "maypromise";
  * データベースの 1 行を表すデータ構造です。
  *
  * キーにカラム名、値にそのデータの内容を持ちます。
+ *
+ * @example
+ * ```
+ * import type { Row } from "@z-rack/core";
+ *
+ * const row: Row = { id: 1, name: "Alice" };
+ * ```
  */
 export type Row = {
   /**
@@ -38,6 +45,18 @@ export namespace ITransaction {
 
 /**
  * データベースのトランザクションを制御するためのインターフェースです。
+ *
+ * @example
+ * ```
+ * import type { ITransaction } from "@z-rack/core";
+ *
+ * class MyTransaction implements ITransaction {
+ *   query(args: ITransaction.QueryArgs) {
+ *     return [];
+ *   }
+ *   rollback(args: ITransaction.RoolbackArgs) {}
+ * }
+ * ```
  */
 export interface ITransaction {
   /**
@@ -131,6 +150,21 @@ export namespace IDatabaseClient {
 
 /**
  * データベース操作を管理するメインのクライアントインターフェースです。
+ *
+ * @example
+ * ```
+ * import type { IDatabaseClient } from "@z-rack/core";
+ *
+ * class MyClient implements IDatabaseClient {
+ *   readonly isOpen = true;
+ *   query(args: IDatabaseClient.QueryArgs) {
+ *     return [];
+ *   }
+ *   transaction(args: IDatabaseClient.TransactionArgs) {
+ *     return Promise.resolve();
+ *   }
+ * }
+ * ```
  */
 export interface IDatabaseClient {
   /**

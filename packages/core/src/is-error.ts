@@ -3,6 +3,14 @@
  *
  * @param error 判定対象となる未知の値です。
  * @returns 値が `Error` または `DOMException` である場合に `true` を返します。
+ *
+ * @example
+ * ```
+ * import isError from "@z-rack/core/is-error";
+ *
+ * isError(new TypeError("foo")); // => true
+ * isError({ message: "foo" });  // => false
+ * ```
  */
 let isError: (error: unknown) => error is Error;
 

@@ -48,10 +48,10 @@ describe("初期化および状態管理", () => {
     expect,
     dict,
   }) => {
-    // Arrange & Act
+    // 準備と実行
     const vibrato = new Vibrato(dict);
 
-    // Assert
+    // 検証
     expect(vibrato.isOpen).toBe(false);
 
     // Cleanup
@@ -61,16 +61,16 @@ describe("初期化および状態管理", () => {
   test("URL 指定の辞書データでインスタンスを生成したとき、正常に初期化される", async ({
     expect,
   }) => {
-    // Arrange
+    // 準備
     const urlDict: VibratoDictionaryDataZstd = {
       url: "https://example.com/dict.zst",
       checksum: "valid-hash",
     };
 
-    // Act
+    // 実行
     const vibrato = new Vibrato(urlDict);
 
-    // Assert
+    // 検証
     expect(vibrato).toBeDefined();
 
     // Cleanup
@@ -83,14 +83,14 @@ describe("初期化および状態管理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
 
-    // Act
+    // 実行
     await vibrato.open({ signal });
 
-    // Assert
+    // 検証
     expect(vibrato.isOpen).toBe(true);
 
     // Cleanup
@@ -105,7 +105,7 @@ describe("初期化および状態管理", () => {
   }) => {
     skip(typeof document === "undefined");
 
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const invalidDict: VibratoDictionaryDataZstd = {
       url: dictUrl,
@@ -113,7 +113,7 @@ describe("初期化および状態管理", () => {
     };
     const vibrato = new Vibrato(invalidDict);
 
-    // Act & Assert
+    // 実行と検証
     await expect(vibrato.open({ signal })).rejects.toThrow(VibratoChecksumError);
 
     // Cleanup
@@ -126,12 +126,12 @@ describe("初期化および状態管理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
     await vibrato.open({ signal });
 
-    // Act & Assert
+    // 実行と検証
     // 2 回目の呼び出しで例外が発生せず、正常に完了することを確認する。
     await expect(vibrato.open({ signal })).resolves.toBeUndefined();
     expect(vibrato.isOpen).toBe(true);
@@ -145,16 +145,16 @@ describe("初期化および状態管理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
     const controller = new AbortController();
 
-    // Act
+    // 実行
     controller.abort();
     const openPromise = vibrato.open({ signal: controller.signal });
 
-    // Assert
+    // 検証
     await expect(openPromise).rejects.toThrow();
 
     // Cleanup
@@ -164,14 +164,14 @@ describe("初期化および状態管理", () => {
 
 describe("テキスト処理", () => {
   test("全角数字を含むテキストを正規化したとき、半角数字に変換される", ({ expect, dict }) => {
-    // Arrange
+    // 準備
     const vibrato = new Vibrato(dict);
     const text = "全角１２３";
 
-    // Act
+    // 実行
     const result = vibrato.normalize({ text });
 
-    // Assert
+    // 検証
     expect(result).toBe("全角123");
 
     // Cleanup
@@ -182,10 +182,10 @@ describe("テキスト処理", () => {
     expect,
     dict,
   }) => {
-    // Arrange
+    // 準備
     const vibrato = new Vibrato(dict);
 
-    // Act & Assert
+    // 実行と検証
     expect(() => vibrato.tokenize({ language: "jpn", text: "テスト" })).toThrow(
       VibratoNotOpenError,
     );
@@ -200,15 +200,15 @@ describe("テキスト処理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
     await vibrato.open({ signal });
 
-    // Act
+    // 実行
     const result = vibrato.tokenize({ language: "jpn", text: "" });
 
-    // Assert
+    // 検証
     expect(result).toStrictEqual([]);
 
     // Cleanup
@@ -221,15 +221,15 @@ describe("テキスト処理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
     await vibrato.open({ signal });
 
-    // Act
+    // 実行
     const result = vibrato.tokenize({ language: "eng", text: "Hello World" });
 
-    // Assert
+    // 検証
     expect(result).toStrictEqual(["Hello", "World"]);
 
     // Cleanup
@@ -242,18 +242,18 @@ describe("テキスト処理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict);
     await vibrato.open({ signal });
 
-    // Act
+    // 実行
     const result = vibrato.tokenize({
       language: "jpn",
       text: "すもももももももものうち",
     });
 
-    // Assert
+    // 検証
     expect(result).toStrictEqual(["すもも", "も", "もも", "も", "もも", "の", "うち"]);
 
     // Cleanup
@@ -266,18 +266,18 @@ describe("テキスト処理", () => {
     wasm,
     dict,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const vibrato = new Vibrato(dict, { omitPos: ["助詞"] });
     await vibrato.open({ signal });
 
-    // Act
+    // 実行
     const result = vibrato.tokenize({
       language: "jpn",
       text: "すもももももももものうち",
     });
 
-    // Assert
+    // 検証
     // 「も」と「の」が除外されることを期待する。
     expect(result).toStrictEqual(["すもも", "もも", "もも", "うち"]);
 
@@ -292,7 +292,7 @@ describe("境界値および異常系", () => {
     signal,
     wasm,
   }) => {
-    // Arrange
+    // 準備
     Vibrato.setWasmSource(wasm);
     const nonExistentDict: VibratoDictionaryDataZstd = {
       url: "https://example.com/non-existent.dic.zst",
@@ -300,7 +300,7 @@ describe("境界値および異常系", () => {
     };
     const vibrato = new Vibrato(nonExistentDict);
 
-    // Act & Assert
+    // 実行と検証
     await expect(vibrato.open({ signal })).rejects.toThrow();
   });
 });

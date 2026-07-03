@@ -11,6 +11,14 @@ const toString = Object.prototype.toString;
  *
  * @param value `ArrayBuffer` オブジェクトであるか検証する値です。
  * @returns `value` が `ArrayBuffer` オブジェクトであれば `true`、そうでなければ `false` です。
+ *
+ * @example
+ * ```
+ * import isArrayBuffer from "./_is-array-buffer.js";
+ *
+ * isArrayBuffer(new ArrayBuffer(8)); // => true
+ * isArrayBuffer(new Uint8Array(8));  // => false
+ * ```
  */
 export default function isArrayBuffer(value: unknown): value is ArrayBuffer {
   return (

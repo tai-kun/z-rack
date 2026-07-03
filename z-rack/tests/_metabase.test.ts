@@ -83,12 +83,12 @@ const test = vitest.extend<{
 });
 
 test("エンティティー ID を取得できる", async ({ meta, expect, signal }) => {
-  // Arrange
+  // 準備
   await meta.open(signal);
 
-  // Act
+  // 実行
   const entityId = await meta.getEntityId(signal);
 
-  // Assert
+  // 検証
   expect(entityId).toMatch(/^[0-9a-z]+$/i);
 });
