@@ -9,7 +9,7 @@ import { NinjaPromise } from "ninja-promise";
  *
  * @example
  * ```
- * import createAbortPromise from "@z-rack/core/create-abort-promise";
+ * import { createAbortPromise } from "@z-rack/core";
  *
  * const ac = new AbortController();
  * const promise = createAbortPromise(ac.signal);

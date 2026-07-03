@@ -42,7 +42,9 @@ describe("各カラム更新断片", () => {
 
   test("UpdateMimeTypeColumnSql が mime_type を含む", ({ expect }) => {
     // 実行
-    const { text } = UpdateMimeTypeColumnSql.fillAll({ mimeType: "text/html" as MimeType }).toJSON();
+    const { text } = UpdateMimeTypeColumnSql.fillAll({
+      mimeType: "text/html" as MimeType,
+    }).toJSON();
 
     // 検証
     expect(text).toContain("mime_type");

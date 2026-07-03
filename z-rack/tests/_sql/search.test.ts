@@ -27,7 +27,9 @@ describe("search SQL 断片", () => {
     expect(compiled.text).toContain("search_text IS NOT NULL");
   });
 
-  test("SearchMetadataOrderAndPaginationSql に並び替えとページネーションが含まれる", ({ expect }) => {
+  test("SearchMetadataOrderAndPaginationSql に並び替えとページネーションが含まれる", ({
+    expect,
+  }) => {
     // 実行
     const compiled = SearchMetadataOrderAndPaginationSql.fillAll({
       take: sql.raw("10"),

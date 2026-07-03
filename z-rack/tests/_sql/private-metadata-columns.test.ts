@@ -48,7 +48,12 @@ describe("private-metadata-columns", () => {
 
   test("すべてのカラムを結合してもエラーにならない", ({ expect }) => {
     // 実行
-    const compiled = sql.join(fragments.map(([, f]) => f), ",").toJSON();
+    const compiled = sql
+      .join(
+        fragments.map(([, f]) => f),
+        ",",
+      )
+      .toJSON();
 
     // 検証
     expect(compiled.text.length).toBeGreaterThan(0);

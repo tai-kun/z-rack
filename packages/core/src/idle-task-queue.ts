@@ -33,7 +33,7 @@ export interface IdleTask {
  *
  * @example
  * ```
- * import IdleTaskQueue from "@z-rack/core/idle-task-queue";
+ * import { IdleTaskQueue } from "@z-rack/core";
  *
  * const queue = new IdleTaskQueue();
  *

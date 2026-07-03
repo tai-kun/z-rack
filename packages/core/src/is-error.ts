@@ -6,7 +6,7 @@
  *
  * @example
  * ```
- * import isError from "@z-rack/core/is-error";
+ * import { isError } from "@z-rack/core";
  *
  * isError(new TypeError("foo")); // => true
  * isError({ message: "foo" });  // => false

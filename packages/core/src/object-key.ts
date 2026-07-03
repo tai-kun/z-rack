@@ -14,7 +14,7 @@ const SLASH = 47;
  *
  * @example
  * ```
- * import ObjectKey from "@z-rack/core/object-key";
+ * import { ObjectKey } from "@z-rack/core";
  *
  * const key = ObjectKey.parse("foo/bar/baz.txt");
  * key.segments;   // => ["foo", "bar", "baz.txt"]

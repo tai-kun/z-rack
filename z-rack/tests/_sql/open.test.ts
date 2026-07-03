@@ -233,11 +233,7 @@ describe("FindAllCollationNamesSql", () => {
 describe("FindAllCollationNamesResultSchema", () => {
   test("重複を排除して照合順序名の配列を返す", ({ expect }) => {
     // 準備
-    const input = [
-      { collname: "en-x-icu" },
-      { collname: "ja-x-icu" },
-      { collname: "en-x-icu" },
-    ];
+    const input = [{ collname: "en-x-icu" }, { collname: "ja-x-icu" }, { collname: "en-x-icu" }];
 
     // 実行
     const result = v.parseOutput(FindAllCollationNamesResultSchema, input);

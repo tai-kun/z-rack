@@ -93,7 +93,10 @@ describe("UpdateMetadataDeletedResultSchema", () => {
 describe("DeleteMetadataSql", () => {
   test("private_metadata から物理削除する", ({ expect }) => {
     // 実行
-    const { text } = DeleteMetadataSql.fillAll({ ...tables, objectId: VALID_UUID_V7 as ObjectId }).toJSON();
+    const { text } = DeleteMetadataSql.fillAll({
+      ...tables,
+      objectId: VALID_UUID_V7 as ObjectId,
+    }).toJSON();
 
     // 検証
     expect(text).toContain("DELETE FROM");
@@ -104,7 +107,10 @@ describe("DeleteMetadataSql", () => {
 describe("DeleteObjectIdSql", () => {
   test("object_ids から削除する", ({ expect }) => {
     // 実行
-    const { text } = DeleteObjectIdSql.fillAll({ ...tables, objectId: VALID_UUID_V7 as ObjectId }).toJSON();
+    const { text } = DeleteObjectIdSql.fillAll({
+      ...tables,
+      objectId: VALID_UUID_V7 as ObjectId,
+    }).toJSON();
 
     // 検証
     expect(text).toContain("DELETE FROM");
@@ -115,7 +121,10 @@ describe("DeleteObjectIdSql", () => {
 describe("DeleteEntityIdSql", () => {
   test("entity_ids から削除する", ({ expect }) => {
     // 実行
-    const { text } = DeleteEntityIdSql.fillAll({ ...tables, entityId: VALID_ENTITY_ID as EntityId }).toJSON();
+    const { text } = DeleteEntityIdSql.fillAll({
+      ...tables,
+      entityId: VALID_ENTITY_ID as EntityId,
+    }).toJSON();
 
     // 検証
     expect(text).toContain("DELETE FROM");

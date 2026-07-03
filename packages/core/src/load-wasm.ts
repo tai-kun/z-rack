@@ -148,7 +148,7 @@ function isWasmModule(x: unknown): x is WebAssembly.Module {
  *
  * @example
  * ```
- * import loadWasm from "@z-rack/core/load-wasm";
+ * import { loadWasm } from "@z-rack/core";
  *
  * // URL から読み込む場合
  * const exports = await loadWasm("https://example.com/module.wasm");
