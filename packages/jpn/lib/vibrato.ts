@@ -154,7 +154,7 @@ export default class Vibrato implements ITextSearch {
       const dictData = await once(`vibrato_dict_${checksum}`, signal, async (signal) => {
         const resp = await fetch(dictUrl, { signal, redirect: "follow" });
         if (resp.status !== 200) {
-          throw new HttpResponseError(resp);
+          throw new HttpResponseError({ response: resp });
         }
 
         const buff = await resp.arrayBuffer();
